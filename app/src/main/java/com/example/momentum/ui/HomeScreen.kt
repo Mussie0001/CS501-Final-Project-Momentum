@@ -3,7 +3,6 @@ package com.example.momentum.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -42,6 +41,12 @@ fun HomeScreen(
                 )
                 NavigationBarItem(
                     selected = false,
+                    onClick = { onTabSelected("add") },
+                    icon = { Icon(painterResource(R.drawable.ic_add), contentDescription = "Add") },
+                    label = { Text("New Habit") }
+                )
+                NavigationBarItem(
+                    selected = false,
                     onClick = { onTabSelected("history") },
                     icon = { Icon(painterResource(R.drawable.ic_history), contentDescription = "History") },
                     label = { Text("History") }
@@ -52,11 +57,6 @@ fun HomeScreen(
                     icon = { Icon(painterResource(R.drawable.ic_settings), contentDescription = "Settings") },
                     label = { Text("Settings") }
                 )
-            }
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onAddHabitClick) {
-                Text("+")
             }
         }
     ) { padding ->
@@ -71,15 +71,14 @@ fun HomeScreen(
             Text(
                 text = "Momentum",
                 style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.fillMaxWidth(),
+                fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
+                modifier = Modifier.fillMaxWidth()
             )
 
             // quote box
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 color = Color(0xFFE0E0E0),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -91,13 +90,9 @@ fun HomeScreen(
                 )
             }
 
-            // habits list
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                items(habits.size) { index ->
-                    val habit = habits[index]
+            // habit list and summary grouped together
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                habits.forEachIndexed { index, habit ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -125,17 +120,16 @@ fun HomeScreen(
                         }
                     }
                 }
+
+                Divider()
+
+                Text(
+                    text = "$completedCount of ${habits.size} habits completed today",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
-
-            Divider()
-
-            // habits completed today summary
-            Text(
-                text = "$completedCount of ${habits.size} habits completed today",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }

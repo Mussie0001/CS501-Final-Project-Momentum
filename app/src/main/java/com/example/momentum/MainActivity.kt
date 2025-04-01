@@ -18,6 +18,7 @@ import javax.net.ssl.HttpsURLConnection
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
+import com.example.momentum.ui.AddHabitForm
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -53,11 +54,18 @@ class MainActivity : ComponentActivity() {
                                 label = { Text("Home") }
                             )
                             NavigationBarItem(
+                                selected = selectedTab == "add",
+                                onClick = { selectedTab = "add"},
+                                icon = { Icon(painterResource(id = R.drawable.ic_add), contentDescription = "Add") },
+                                label = { Text("New Habit") }
+                            )
+                            NavigationBarItem(
                                 selected = selectedTab == "history",
                                 onClick = { selectedTab = "history" },
                                 icon = { Icon(painterResource(id = R.drawable.ic_history), contentDescription = "History") },
                                 label = { Text("History") }
                             )
+
                             NavigationBarItem(
                                 selected = selectedTab == "settings",
                                 onClick = { selectedTab = "settings" },
@@ -69,6 +77,7 @@ class MainActivity : ComponentActivity() {
 
                 ) { padding ->
                     when (selectedTab) {
+                        // navigate to home screen
                         "home" -> HomeScreen(
                             habits = habits,
                             onHabitToggle = { index ->
@@ -81,8 +90,19 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(padding),
                             onTabSelected = { selectedTab = it }
                         )
-                        // "history" -> HistoryScreen()
-                        // "settings" -> SettingsScreen()
+                        // navigate to add new habit page
+                        "add" -> AddHabitForm(
+                            onSave = { name, freq, reminder ->
+                                // convert back to mutable list to avoid type mismatch
+                                // placeholder image for now -- will add dynamic selection soon
+                                habits = (habits + Habit(name, R.drawable.ic_exercise, false)).toMutableList()
+                                selectedTab = "home"
+                            },
+                            onCancel = { selectedTab = "home" }
+                        )
+
+                        // "history" -> HistoryScreen() -- COMING BY SPRINT 2
+                        // "settings" -> SettingsScreen() -- COMING BY SPRINT 2
                     }
                 }
             }
