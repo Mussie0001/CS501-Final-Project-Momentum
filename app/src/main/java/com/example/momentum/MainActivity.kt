@@ -21,7 +21,7 @@ import androidx.compose.material3.Text
 import com.example.momentum.ui.AddHabitForm
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-
+import com.example.momentum.ui.HistoryScreen
 
 val sampleHabits = listOf(
     Habit("Exercise", R.drawable.ic_exercise, false),
@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
                             onCancel = { selectedTab = "home" }
                         )
 
-                        // "history" -> HistoryScreen() -- COMING BY SPRINT 2
+                        "history" -> HistoryScreen()
                         // "settings" -> SettingsScreen() -- COMING BY SPRINT 2
                     }
                 }
