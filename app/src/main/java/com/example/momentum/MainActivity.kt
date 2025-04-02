@@ -23,6 +23,7 @@ import com.example.momentum.ui.SettingsScreen
 import com.example.momentum.ui.ThemePreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.example.momentum.ui.HistoryScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
@@ -115,6 +116,9 @@ class MainActivity : ComponentActivity() {
                             onCancel = { selectedTab = "home" }
                         )
 
+
+                        "history" -> HistoryScreen()
+                        
                         // Settings screen implementation
                         "settings" -> SettingsScreen(
                             isDarkMode = userDarkMode,
@@ -125,8 +129,6 @@ class MainActivity : ComponentActivity() {
                             },
                             modifier = Modifier.padding(padding)
                         )
-
-                        // "history" -> HistoryScreen() -- COMING BY SPRINT 2
                     }
                 }
             }
