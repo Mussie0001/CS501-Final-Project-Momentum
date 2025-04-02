@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.LocalDate
@@ -26,14 +27,15 @@ fun HistoryScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(24.dp)
     ) {
         // Header
         Text(
             text = "Habit History Progress Check",
-            fontSize = 24.sp,
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 24.dp)
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         )
 
         // Days row
