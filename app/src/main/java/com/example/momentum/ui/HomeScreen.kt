@@ -63,7 +63,7 @@ fun HomeScreen(
         Column(
             modifier = modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(24.dp)
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -79,13 +79,14 @@ fun HomeScreen(
             // quote box
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = Color(0xFFE0E0E0),
+                color = MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = quote,
                     modifier = Modifier.padding(16.dp),
                     fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
             }

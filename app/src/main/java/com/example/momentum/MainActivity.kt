@@ -19,9 +19,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import com.example.momentum.ui.AddHabitForm
+import com.example.momentum.ui.SettingsScreen
+import com.example.momentum.ui.ThemePreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.example.momentum.ui.HistoryScreen
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 
 val sampleHabits = listOf(
     Habit("Exercise", R.drawable.ic_exercise, false),
@@ -31,11 +36,20 @@ val sampleHabits = listOf(
 )
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var themePreference: ThemePreference
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        themePreference = ThemePreference(this)
 
         setContent {
-            MomentumTheme {
+            val userDarkMode = themePreference.isDarkMode.collectAsStateWithLifecycle(
+                initialValue = false
+            ).value
+
+            val isDarkTheme = userDarkMode
+            MomentumTheme(darkTheme = isDarkTheme) {
                 var selectedTab by remember { mutableStateOf("home") }
                 var quote by remember { mutableStateOf("") }
                 var habits by remember { mutableStateOf(sampleHabits.toMutableList()) }
@@ -86,9 +100,10 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             quote = quote,
-                            onAddHabitClick = { /* WORK IN PROGRESS -- SOON */ },
+                            onAddHabitClick = { selectedTab = "add" },
                             modifier = Modifier.padding(padding),
-                            onTabSelected = { selectedTab = it }
+                            onTabSelected = { selectedTab = it },
+
                         )
                         // navigate to add new habit page
                         "add" -> AddHabitForm(
@@ -101,8 +116,19 @@ class MainActivity : ComponentActivity() {
                             onCancel = { selectedTab = "home" }
                         )
 
+
                         "history" -> HistoryScreen()
-                        // "settings" -> SettingsScreen() -- COMING BY SPRINT 2
+                        
+                        // Settings screen implementation
+                        "settings" -> SettingsScreen(
+                            isDarkMode = userDarkMode,
+                            onThemeToggle = { newMode ->
+                                lifecycleScope.launch {
+                                    themePreference.updateTheme(newMode)
+                                }
+                            },
+                            modifier = Modifier.padding(padding)
+                        )
                     }
                 }
             }
@@ -120,16 +146,10 @@ class MainActivity : ComponentActivity() {
                 "\"$quote\"" // looks better with quotes around it
             } catch (e: Exception) {
                 Log.e("ZenQuotes", "Error fetching quote", e)
-                "You don’t have to be extreme, just consistent." // fallback quote from wireframe
+                "You don't have to be extreme, just consistent." // fallback quote from wireframe
             } finally {
                 conn.disconnect()
             }
         }
     }
-
-
 }
-
-
-
-
