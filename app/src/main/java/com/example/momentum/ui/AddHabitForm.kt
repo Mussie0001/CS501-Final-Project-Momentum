@@ -53,7 +53,12 @@ fun AddHabitForm(
         )
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { onSave(name, frequency, reminderTime) }) {
+            Button(
+                onClick = {
+                    onSave(name, frequency, if (reminderTime.isBlank()) null else reminderTime)
+                },
+                enabled = name.isNotBlank()
+            ) {
                 Text("Save")
             }
             OutlinedButton(onClick = onCancel) {
