@@ -30,11 +30,12 @@ fun HistoryScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .padding(horizontal = 16.dp)
+            .padding(top = 24.dp)
     ) {
         // Header
         Text(
-            text = "Habit History Progress Check",
+            text = "Habit History",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
@@ -58,14 +59,14 @@ fun HistoryScreen() {
             FilterChip(
                 selected = currentView == "monthly",
                 onClick = { currentView = "monthly" },
-                label = { Text("Monthly View") },
+                label = { Text("Monthly View") }
             )
         }
 
         // Content based on selected view
         when (currentView) {
             "weekly" -> WeeklyView()
-            "monthly" -> MonthlyView()
+            "monthly" -> MonthlyHistoryView()
         }
     }
 }
@@ -136,43 +137,6 @@ private fun WeeklyView() {
 
                 Spacer(modifier = Modifier.height(12.dp))
             }
-        }
-    }
-}
-
-@Composable
-private fun MonthlyView() {
-    // Placeholder for monthly calendar view
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .height(300.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Monthly Calendar View",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Coming soon! This feature is under development.",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-            )
         }
     }
 }
