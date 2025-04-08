@@ -6,6 +6,7 @@ import com.example.momentum.data.entity.HabitEntity
 import com.example.momentum.model.Habit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -14,6 +15,7 @@ import java.time.ZoneId
  */
 class HabitRepository(private val habitDao: HabitDao) {
 
+    // Convert between domain model and entity
     private fun HabitEntity.toModel(isCompleted: Boolean = false): Habit {
         return Habit(
             id = this.id,
@@ -38,6 +40,7 @@ class HabitRepository(private val habitDao: HabitDao) {
         return this.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     }
 
+    // Function to get habits with completion status for today
     fun getHabitsWithTodayCompletion(): Flow<List<Habit>> {
         val today = LocalDate.now().toTimestamp()
         return habitDao.getAllHabits().map { habitEntities ->
@@ -64,16 +67,7 @@ class HabitRepository(private val habitDao: HabitDao) {
         }
     }
 
-    suspend fun removeDuplicateHabits() {
-        habitDao.removeDuplicateHabits()
-    }
-
-    // Get count
-    suspend fun getHabitCount(): Int {
-        return habitDao.getHabitCount()
-    }
-
-    // Add habit
+    // Add a new habit
     suspend fun addHabit(name: String, iconRes: Int, frequency: Int = 1, reminderTime: String? = null): Long {
         val habitEntity = HabitEntity(
             name = name,
@@ -84,19 +78,23 @@ class HabitRepository(private val habitDao: HabitDao) {
         return habitDao.insertHabit(habitEntity)
     }
 
-    // Update habit
+    // Update an existing habit
     suspend fun updateHabit(habit: Habit, frequency: Int = 1, reminderTime: String? = null) {
         val habitEntity = habit.toEntity(frequency, reminderTime)
         habitDao.updateHabit(habitEntity)
     }
 
-    // Delete habit
+    // Delete a habit
     suspend fun deleteHabit(habit: Habit) {
         val habitEntity = habit.toEntity()
         habitDao.deleteHabit(habitEntity)
     }
 
-    // Get completions (History date range)
+    // Delete all habits
+    suspend fun deleteAllHabits() {
+        habitDao.deleteAllHabits()
+    }
+
     fun getCompletionsForDateRange(startDate: LocalDate, endDate: LocalDate): Flow<Map<Long, List<LocalDate>>> {
         val startTimestamp = startDate.toTimestamp()
         val endTimestamp = endDate.toTimestamp()
@@ -106,9 +104,26 @@ class HabitRepository(private val habitDao: HabitDao) {
                 completions.groupBy(
                     { it.habitId },
                     {
-                        LocalDate.ofEpochDay(it.completedDate / (24 * 60 * 60 * 1000))
+                        // Convert the timestamp back to LocalDate properly
+                        Instant.ofEpochMilli(it.completedDate).atZone(ZoneId.systemDefault()).toLocalDate()
                     }
                 )
             }
     }
+
+    // Clean up duplicate habits
+    suspend fun removeDuplicateHabits() {
+        habitDao.removeDuplicateHabits()
+    }
+
+    // Get count of habits
+    suspend fun getHabitCount(): Int {
+        return habitDao.getHabitCount()
+    }
+
+    // Get a habit by ID
+    suspend fun getHabitById(habitId: Long): HabitEntity? {
+        return habitDao.getHabitById(habitId)
+    }
+
 }

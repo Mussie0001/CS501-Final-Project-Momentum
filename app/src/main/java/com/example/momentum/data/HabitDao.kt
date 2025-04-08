@@ -32,6 +32,10 @@ interface HabitDao {
     @Query("DELETE FROM habits WHERE id NOT IN (SELECT MIN(id) FROM habits GROUP BY name)")
     suspend fun removeDuplicateHabits()
 
+    // Delete all habits
+    @Query("DELETE FROM habits")
+    suspend fun deleteAllHabits()
+
     @Query("SELECT * FROM habits WHERE id = :habitId")
     suspend fun getHabitById(habitId: Long): HabitEntity?
 

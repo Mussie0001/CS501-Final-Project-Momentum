@@ -12,6 +12,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.example.momentum.data.DataInitializer
 import com.example.momentum.data.MomentumDatabase
 import com.example.momentum.data.repository.HabitRepository
 import com.example.momentum.ui.AddHabitForm
@@ -37,7 +38,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         themePreference = ThemePreference(this)
-
         database = MomentumDatabase.getDatabase(this)
         repository = HabitRepository(database.habitDao())
 
@@ -46,10 +46,20 @@ class MainActivity : ComponentActivity() {
             HabitViewModel.Factory(repository)
         )[HabitViewModel::class.java]
 
-        // Clean up duplicates and populate sample data if needed
+        val prefs = getSharedPreferences("momentum_prefs", MODE_PRIVATE)
+        val isDbInitialized = prefs.getBoolean("db_initialized", false)
+
         lifecycleScope.launch {
-            habitViewModel.removeDuplicateHabits()
-            populateSampleData()
+            if (!isDbInitialized) {
+                Log.d("MainActivity", "First time run detected. Initializing database with sample data.")
+                repository.deleteAllHabits()
+                populateSampleData()
+                prefs.edit().putBoolean("db_initialized", true).apply()
+                Log.d("MainActivity", "Database marked as initialized.")
+            } else {
+                Log.d("MainActivity", "App has run before. Checking for duplicates.")
+                repository.removeDuplicateHabits()
+            }
         }
 
         setContent {
@@ -61,8 +71,6 @@ class MainActivity : ComponentActivity() {
             MomentumTheme(darkTheme = isDarkTheme) {
                 var selectedTab by remember { mutableStateOf("home") }
                 var quote by remember { mutableStateOf("") }
-
-                // Collect habits from ViewModel
                 val habits = habitViewModel.habits.collectAsStateWithLifecycle().value
 
                 LaunchedEffect(true) {
@@ -90,7 +98,6 @@ class MainActivity : ComponentActivity() {
                                 icon = { Icon(painterResource(id = R.drawable.ic_history), contentDescription = "History") },
                                 label = { Text("History") }
                             )
-
                             NavigationBarItem(
                                 selected = selectedTab == "settings",
                                 onClick = { selectedTab = "settings" },
@@ -99,10 +106,8 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
-
                 ) { padding ->
                     when (selectedTab) {
-                        // navigate to home screen
                         "home" -> HomeScreen(
                             habits = habits,
                             onHabitToggle = { index ->
@@ -116,7 +121,6 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(padding),
                             onTabSelected = { selectedTab = it },
                         )
-                        // navigate to add new habit page
                         "add" -> AddHabitForm(
                             onSave = { name, freq, reminder ->
                                 habitViewModel.addHabit(
@@ -129,10 +133,7 @@ class MainActivity : ComponentActivity() {
                             },
                             onCancel = { selectedTab = "home" }
                         )
-
                         "history" -> HistoryScreen()
-
-                        // Settings screen implementation
                         "settings" -> SettingsScreen(
                             isDarkMode = userDarkMode,
                             onThemeToggle = { newMode ->
@@ -156,28 +157,22 @@ class MainActivity : ComponentActivity() {
                 val response = conn.inputStream.bufferedReader().readText()
                 val jsonArray = JSONArray(response)
                 val quote = jsonArray.getJSONObject(0).getString("q")
-                "\"$quote\"" // looks better with quotes around it
+                "\"$quote\""
             } catch (e: Exception) {
                 Log.e("ZenQuotes", "Error fetching quote", e)
-                "You don't have to be extreme, just consistent." // fallback quote from wireframe
+                "You don't have to be extreme, just consistent."
             } finally {
                 conn.disconnect()
             }
         }
     }
 
-    /**
-     * Populates the database with sample habits if the database is empty
-     */
     private suspend fun populateSampleData() {
-        // Check if habits already exist by checking the count
         val currentHabits = habitViewModel.habits.value
 
-        // Only populate if there are no habits in the database
         if (currentHabits.isEmpty()) {
             Log.d("MainActivity", "Populating sample data - database is empty")
 
-            // Sample habits from original app
             val sampleHabits = listOf(
                 Triple("Exercise", R.drawable.ic_exercise, 1),
                 Triple("Reading", R.drawable.ic_reading, 1),
@@ -185,7 +180,6 @@ class MainActivity : ComponentActivity() {
                 Triple("Study", R.drawable.ic_study, 1)
             )
 
-            // Add each sample habit
             sampleHabits.forEach { (name, icon, frequency) ->
                 try {
                     repository.addHabit(
@@ -198,19 +192,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Complete some habits for today to match the initial state
-            // Wait for habits to be loaded from database
             kotlinx.coroutines.delay(500)
 
             try {
-                // Get updated habits and complete the selected ones (Drink Water and Study)
                 val updatedHabits = habitViewModel.habits.value
-
-                // Find the indices of "Drink Water" and "Study"
                 val waterIndex = updatedHabits.indexOfFirst { it.name == "Drink Water" }
                 val studyIndex = updatedHabits.indexOfFirst { it.name == "Study" }
 
-                // Toggle completion if found
                 if (waterIndex >= 0) {
                     habitViewModel.toggleHabitCompletion(waterIndex)
                 }
