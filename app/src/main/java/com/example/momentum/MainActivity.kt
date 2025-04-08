@@ -41,15 +41,14 @@ class MainActivity : ComponentActivity() {
         database = MomentumDatabase.getDatabase(this)
         repository = HabitRepository(database.habitDao())
 
-
         habitViewModel = ViewModelProvider(
             this,
             HabitViewModel.Factory(repository)
         )[HabitViewModel::class.java]
 
+        // Clean up duplicates and populate sample data if needed
         lifecycleScope.launch {
             habitViewModel.removeDuplicateHabits()
-
             populateSampleData()
         }
 
@@ -108,6 +107,9 @@ class MainActivity : ComponentActivity() {
                             habits = habits,
                             onHabitToggle = { index ->
                                 habitViewModel.toggleHabitCompletion(index)
+                            },
+                            onHabitDelete = { index ->
+                                habitViewModel.deleteHabit(index)
                             },
                             quote = quote,
                             onAddHabitClick = { selectedTab = "add" },
