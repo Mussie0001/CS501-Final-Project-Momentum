@@ -1,5 +1,6 @@
 package com.example.momentum.data.repository
 
+import android.util.Log
 import com.example.momentum.data.dao.HabitDao
 import com.example.momentum.data.entity.HabitCompletionEntity
 import com.example.momentum.data.entity.HabitEntity
@@ -52,13 +53,16 @@ class HabitRepository(private val habitDao: HabitDao) {
         }
     }
 
+    // Function to toggle habit completion status
     suspend fun toggleHabitCompletion(habit: Habit) {
         val today = LocalDate.now().toTimestamp()
         val existingCompletion = habitDao.getHabitCompletionByDate(habit.id, today)
 
         if (existingCompletion != null) {
+            // If already completed, remove the completion
             habitDao.deleteHabitCompletion(existingCompletion)
         } else {
+            // Otherwise, add a new completion
             val completion = HabitCompletionEntity(
                 habitId = habit.id,
                 completedDate = today
@@ -92,9 +96,12 @@ class HabitRepository(private val habitDao: HabitDao) {
 
     // Delete all habits
     suspend fun deleteAllHabits() {
+        Log.d("HabitRepository", "Deleting all habits")
         habitDao.deleteAllHabits()
     }
 
+
+    // Get completion data for history screen (for a date range)
     fun getCompletionsForDateRange(startDate: LocalDate, endDate: LocalDate): Flow<Map<Long, List<LocalDate>>> {
         val startTimestamp = startDate.toTimestamp()
         val endTimestamp = endDate.toTimestamp()

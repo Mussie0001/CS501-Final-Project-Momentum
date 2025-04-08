@@ -11,19 +11,36 @@ import java.time.LocalDate
 
 class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
 
+    // Add a refresh trigger to force reloading habits
+    private val _refreshTrigger = MutableStateFlow(0L)
+
     // Flow of habits with today's completion status
-    val habits: StateFlow<List<Habit>> = repository.getHabitsWithTodayCompletion()
+    val habits: StateFlow<List<Habit>> = _refreshTrigger
+        .flatMapLatest { repository.getHabitsWithTodayCompletion() }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
 
+    // Initialize with a refresh
+    init {
+        refreshHabits()
+    }
+
+    // Method to force refresh of habits from the database
+    fun refreshHabits() {
+        viewModelScope.launch {
+            _refreshTrigger.value = System.currentTimeMillis()
+        }
+    }
+
     // Toggle a habit completion status
     fun toggleHabitCompletion(index: Int) {
         val habit = habits.value[index]
         viewModelScope.launch {
             repository.toggleHabitCompletion(habit)
+            // The Flow will automatically update due to flatMapLatest
         }
     }
 
@@ -31,6 +48,8 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
     fun addHabit(name: String, iconRes: Int, frequency: Int = 1, reminderTime: String? = null) {
         viewModelScope.launch {
             repository.addHabit(name, iconRes, frequency, reminderTime)
+            // Refresh to ensure the UI updates
+            refreshHabits()
         }
     }
 
@@ -38,6 +57,7 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
     fun removeDuplicateHabits() {
         viewModelScope.launch {
             repository.removeDuplicateHabits()
+            refreshHabits()
         }
     }
 
@@ -51,6 +71,7 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         val habit = habits.value[index]
         viewModelScope.launch {
             repository.deleteHabit(habit)
+            refreshHabits()
         }
     }
 
