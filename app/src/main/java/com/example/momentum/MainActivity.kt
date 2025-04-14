@@ -22,7 +22,9 @@ import com.example.momentum.ui.SettingsScreen
 import com.example.momentum.ui.ThemePreference
 import com.example.momentum.ui.theme.MomentumTheme
 import com.example.momentum.viewmodel.HabitViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
@@ -53,44 +55,29 @@ class MainActivity : ComponentActivity() {
             HabitViewModel.Factory(repository)
         )[HabitViewModel::class.java]
 
-        // Store a DB initialization flag in SharedPreferences
-        val prefs = getSharedPreferences("momentum_prefs", MODE_PRIVATE)
-        val isDbInitialized = prefs.getBoolean("db_initialized", false)
 
         // Clean up duplicates and populate sample data if needed
-        lifecycleScope.launch {
-            // First, check if we need to clean up duplicates
+        lifecycleScope.launch(Dispatchers.IO) {
+            val prefs = getSharedPreferences("momentum_prefs", MODE_PRIVATE)
+            val isDbInitialized = prefs.getBoolean("db_initialized", false)
+
             if (!isDbInitialized) {
-                // First-time run - delete any existing data and populate from scratch
-                Log.d("MainActivity", "First time run detected. Initializing database with sample data.")
-
-                // Clean the database manually if deleteAllHabits is not available
+                Log.d("MainActivity", "First run: Initializing DB")
                 try {
-                    val habitCount = repository.getHabitCount()
-                    if (habitCount > 0) {
-                        Log.d("MainActivity", "Clearing existing data. Found $habitCount habits.")
-                        repository.removeDuplicateHabits()
+                    // Clear existing data
+                    repository.removeDuplicateHabits()
+                    habitViewModel.habits.value.forEach { repository.deleteHabit(it) }
 
-                        // Get all habits and delete them individually if needed
-                        val habits = habitViewModel.habits.value
-                        for (habit in habits) {
-                            repository.deleteHabit(habit)
-                        }
-                    }
+                    // Populate sample data
+                    populateSampleData()
+
+                    // Mark as initialized
+                    prefs.edit().putBoolean("db_initialized", true).apply()
                 } catch (e: Exception) {
-                    Log.e("MainActivity", "Error clearing existing data", e)
+                    Log.e("MainActivity", "DB init failed", e)
                 }
-
-                // Populate with sample data
-                populateSampleData()
-
-                // Mark as initialized
-                prefs.edit().putBoolean("db_initialized", true).apply()
-                Log.d("MainActivity", "Database marked as initialized.")
             } else {
-                // App has run before, just clean up any duplicates
-                Log.d("MainActivity", "App has run before. Checking for duplicates.")
-                repository.removeDuplicateHabits()
+                repository.removeDuplicateHabits() // Regular cleanup
             }
         }
 
@@ -235,15 +222,11 @@ class MainActivity : ComponentActivity() {
     /**
      * Populates the database with sample habits if the database is empty
      */
-    private suspend fun populateSampleData() {
-        // Check if habits already exist by checking the count
+    private suspend fun populateSampleData() = withContext(Dispatchers.IO) {
+        // Keep your existing logic, but now it runs on IO thread
         val currentHabits = habitViewModel.habits.value
-
-        // Only populate if there are no habits in the database
         if (currentHabits.isEmpty()) {
-            Log.d("MainActivity", "Populating sample data - database is empty")
-
-            // Sample habits from original app
+            Log.d("MainActivity", "Populating sample data")
             val sampleHabits = listOf(
                 Triple("Exercise", R.drawable.ic_exercise, 1),
                 Triple("Reading", R.drawable.ic_reading, 1),
@@ -251,44 +234,22 @@ class MainActivity : ComponentActivity() {
                 Triple("Study", R.drawable.ic_study, 1)
             )
 
-            // Add each sample habit
             sampleHabits.forEach { (name, icon, frequency) ->
-                try {
-                    repository.addHabit(
-                        name = name,
-                        iconRes = icon,
-                        frequency = frequency
-                    )
-                } catch (e: Exception) {
-                    Log.e("MainActivity", "Error adding habit $name", e)
-                }
+                repository.addHabit(
+                    name = name,
+                    iconRes = icon,
+                    frequency = frequency
+                )
             }
 
-            // Complete some habits for today to match the initial state
-            // Wait for habits to be loaded from database
-            kotlinx.coroutines.delay(500)
-
-            try {
-                // Get updated habits and complete the selected ones (Drink Water and Study)
-                val updatedHabits = habitViewModel.habits.value
-
-                // Find the indices of "Drink Water" and "Study"
-                val waterIndex = updatedHabits.indexOfFirst { it.name == "Drink Water" }
-                val studyIndex = updatedHabits.indexOfFirst { it.name == "Study" }
-
-                // Toggle completion if found
-                if (waterIndex >= 0) {
-                    habitViewModel.toggleHabitCompletion(waterIndex)
-                }
-
-                if (studyIndex >= 0) {
-                    habitViewModel.toggleHabitCompletion(studyIndex)
-                }
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Error completing habits", e)
+            // Complete "Drink Water" and "Study" for demo
+            val updatedHabits = habitViewModel.habits.value
+            updatedHabits.indexOfFirst { it.name == "Drink Water" }.takeIf { it >= 0 }?.let {
+                habitViewModel.toggleHabitCompletion(it)
             }
-        } else {
-            Log.d("MainActivity", "Sample data already exists - skipping population")
+            updatedHabits.indexOfFirst { it.name == "Study" }.takeIf { it >= 0 }?.let {
+                habitViewModel.toggleHabitCompletion(it)
+            }
         }
     }
 }
