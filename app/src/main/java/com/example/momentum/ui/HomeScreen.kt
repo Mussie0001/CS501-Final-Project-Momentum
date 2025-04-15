@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import com.example.momentum.R
 import com.example.momentum.model.Habit
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +39,9 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     onTabSelected: (String) -> Unit
 ) {
+    val currentDate = remember {
+        SimpleDateFormat("EEEE, MMMM d").format(Date())
+    }
     // state list for habit recomposition (checkmarks)
     val habitsState = remember(habits) { habits.toMutableStateList() }
     val completedCount = habitsState.count { it.isCompleted }
@@ -134,6 +139,15 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .padding(top = 24.dp)
             )
+            Text(
+                text = "Hi, today is $currentDate",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            )
+
 
             // quote box
             Surface(

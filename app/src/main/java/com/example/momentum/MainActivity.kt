@@ -28,6 +28,8 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : ComponentActivity() {
 
@@ -38,6 +40,7 @@ class MainActivity : ComponentActivity() {
 
     // Add this property to track the previous tab
     private var lastSelectedTab = "home"
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,6 +83,7 @@ class MainActivity : ComponentActivity() {
                 repository.removeDuplicateHabits() // Regular cleanup
             }
         }
+
 
         setContent {
             val userDarkMode = themePreference.isDarkMode.collectAsStateWithLifecycle(
@@ -151,19 +155,12 @@ class MainActivity : ComponentActivity() {
                         // navigate to home screen
                         "home" -> HomeScreen(
                             habits = habits,
-                            onHabitToggle = { index ->
-                                habitViewModel.toggleHabitCompletion(index)
-                            },
-                            onHabitDelete = { index ->
-                                habitViewModel.deleteHabit(index)
-                            },
+                            onHabitToggle = { index -> habitViewModel.toggleHabitCompletion(index) },
+                            onHabitDelete = { index -> habitViewModel.deleteHabit(index) },
                             quote = quote,
                             onAddHabitClick = { selectedTab = "add" },
                             modifier = Modifier.padding(padding),
-                            onTabSelected = {
-                                lastSelectedTab = selectedTab
-                                selectedTab = it
-                            },
+                            onTabSelected = { lastSelectedTab = selectedTab; selectedTab = it },
                         )
                         // navigate to add new habit page
                         "add" -> AddHabitForm(
