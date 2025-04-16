@@ -76,7 +76,6 @@ dependencies {
     implementation(libs.androidx.compose.compiler)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material3.navigationbar)
-
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
 

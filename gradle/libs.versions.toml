@@ -8,6 +8,7 @@ retrofit = "2.9.0"
 gson = "2.10.1"
 coroutines = "1.7.3"
 compose-compiler = "1.5.3"
+play-services-wearable = "19.0.0"
 
 [plugins]
 androidApplication = { id = "com.android.application", version = "8.2.0" }
@@ -41,3 +42,4 @@ retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", ver
 # Kotlin Coroutines
 coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "play-services-wearable" }

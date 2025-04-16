@@ -1,5 +1,6 @@
 package com.example.momentum.ui
 
+import android.content.res.Configuration
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -30,118 +32,101 @@ import java.util.*
 
 @Composable
 fun WeeklyView(
-    habitViewModel: HabitViewModel = viewModel(),
-    isLandscapeParent: Boolean = false
-){
-    // State to track the selected week
-    var selectedDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    habitViewModel: HabitViewModel = viewModel()
+) {
+    // 1) detect orientation
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    // Convert to LocalDate
+    // 2) week selection state
+    var selectedDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
     val selectedLocalDate = remember(selectedDate) {
-        Instant.ofEpochMilli(selectedDate).atZone(ZoneId.systemDefault()).toLocalDate()
+        Instant.ofEpochMilli(selectedDate)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
     }
 
-    // Get start (Monday) and end (Sunday) of current week
+    // 3) compute week bounds
     val startOfWeek = remember(selectedLocalDate) {
         selectedLocalDate.with(java.time.DayOfWeek.MONDAY)
     }
-
     val endOfWeek = remember(selectedLocalDate) {
         selectedLocalDate.with(java.time.DayOfWeek.SUNDAY)
     }
 
-    // Collect all habits from the database
+    // 4) load data
     val habits = habitViewModel.habits.collectAsState().value
-
-    // Collect habit completions for the current week
-    val completionsRange = habitViewModel.getHabitCompletionsForRange(
-        startOfWeek,
-        endOfWeek
-    ).collectAsState(initial = emptyMap()).value
-
-    // Generate a map of completion dates for highlighting the calendar
+    val completionsRange = habitViewModel
+        .getHabitCompletionsForRange(startOfWeek, endOfWeek)
+        .collectAsState(initial = emptyMap()).value
     val completionDates = remember(completionsRange) {
         completionsRange.values.flatten().toSet()
     }
-
-    // Get habits completed for selected date
     val habitsForSelectedDate = remember(completionsRange, selectedLocalDate, habits) {
-        val habitIds = completionsRange.filter { (_, dates) ->
-            dates.contains(selectedLocalDate)
-        }.keys
-
-        // Map habitIds to actual habit names
-        habitIds.mapNotNull { habitId ->
-            habits.find { it.id == habitId }?.name
-        }
+        completionsRange.filter { it.value.contains(selectedLocalDate) }
+            .keys
+            .mapNotNull { id -> habits.find { it.id == id }?.name }
     }
 
-    // Define content padding based on orientation
-    val contentPadding = if (isLandscapeParent) {
-        PaddingValues(8.dp)
-    } else {
-        PaddingValues(16.dp)
-    }
-
+    // 5) column with dynamic padding
+    val pad = if (isLandscape) 8.dp else 16.dp
     Column(
-        modifier = Modifier.fillMaxSize().padding(contentPadding)
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(pad)
     ) {
-        // Week view with navigation
+        // ── always show calendar ────────────────────────────────────
         WeekViewWithNavigation(
-            selectedDate = selectedDate,
+            selectedDate    = selectedDate,
             completionDates = completionDates,
-            onDateSelected = {
-                selectedDate = it
-            }
+            onDateSelected  = { selectedDate = it }
         )
 
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+        // ── only in PORTRAIT show the Completed‑Habits section ────
+        if (!isLandscape) {
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
-        // Habits for selected date
-        Text(
-            text = "Completed Habits for ${selectedLocalDate.format(DateTimeFormatter.ofPattern("EEEE, MMMM d"))}",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        )
+            Text(
+                text = "Completed Habits for ${
+                    selectedLocalDate.format(DateTimeFormatter.ofPattern("EEEE, MMMM d"))
+                }",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
 
-        if (habitsForSelectedDate.isEmpty()) {
-            // Empty state
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+            if (habitsForSelectedDate.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        modifier = Modifier.size(56.dp),
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "No habits completed on this day",
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            modifier = Modifier.size(56.dp),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "No habits completed on this day",
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
-            }
-        } else {
-            // List of completed habits
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 16.dp)
-            ) {
-                items(habitsForSelectedDate) { habitName ->
-                    HabitCompletionItem(habitName = habitName)
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    items(habitsForSelectedDate) { habitName ->
+                        HabitCompletionItem(habitName = habitName)
+                    }
                 }
             }
         }

@@ -104,13 +104,15 @@ class MainActivity : ComponentActivity() {
 
             MomentumTheme(darkTheme = isDarkTheme) {
                 var selectedTab by rememberSaveable { mutableStateOf("home") }
-                var quote by remember { mutableStateOf("") }
+                var quote by rememberSaveable { mutableStateOf("") }
 
                 // Collect habits from ViewModel as a state
                 val habits = habitViewModel.habits.collectAsStateWithLifecycle().value
 
                 LaunchedEffect(true) {
-                    quote = fetchQuote()
+                    if (quote.isEmpty()) {
+                        quote = fetchQuote()
+                    }
                 }
 
                 Scaffold(
