@@ -30,8 +30,9 @@ import java.util.*
 
 @Composable
 fun WeeklyView(
-    habitViewModel: HabitViewModel = viewModel()
-) {
+    habitViewModel: HabitViewModel = viewModel(),
+    isLandscapeParent: Boolean = false
+){
     // State to track the selected week
     var selectedDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
@@ -75,8 +76,15 @@ fun WeeklyView(
         }
     }
 
+    // Define content padding based on orientation
+    val contentPadding = if (isLandscapeParent) {
+        PaddingValues(8.dp)
+    } else {
+        PaddingValues(16.dp)
+    }
+
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().padding(contentPadding)
     ) {
         // Week view with navigation
         WeekViewWithNavigation(

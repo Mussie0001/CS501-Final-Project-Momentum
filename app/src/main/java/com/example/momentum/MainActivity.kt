@@ -30,6 +30,14 @@ import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 import java.text.SimpleDateFormat
 import java.util.*
+import android.content.res.Configuration
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.saveable.rememberSaveable
 
 class MainActivity : ComponentActivity() {
 
@@ -38,9 +46,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var database: MomentumDatabase
     private lateinit var repository: HabitRepository
 
-    // Add this property to track the previous tab
     private var lastSelectedTab = "home"
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,7 +63,6 @@ class MainActivity : ComponentActivity() {
             this,
             HabitViewModel.Factory(repository)
         )[HabitViewModel::class.java]
-
 
         // Clean up duplicates and populate sample data if needed
         lifecycleScope.launch(Dispatchers.IO) {
@@ -84,15 +89,21 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-
         setContent {
             val userDarkMode = themePreference.isDarkMode.collectAsStateWithLifecycle(
                 initialValue = false
             ).value
 
             val isDarkTheme = userDarkMode
+
+            // Get current orientation
+            val configuration = LocalConfiguration.current
+            val isLandscape = remember {
+                derivedStateOf { configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
+            }.value
+
             MomentumTheme(darkTheme = isDarkTheme) {
-                var selectedTab by remember { mutableStateOf("home") }
+                var selectedTab by rememberSaveable { mutableStateOf("home") }
                 var quote by remember { mutableStateOf("") }
 
                 // Collect habits from ViewModel as a state
@@ -104,94 +115,188 @@ class MainActivity : ComponentActivity() {
 
                 Scaffold(
                     bottomBar = {
-                        NavigationBar {
-                            NavigationBarItem(
-                                selected = selectedTab == "home",
-                                onClick = {
-                                    // If navigating back to home from another tab, refresh habits
-                                    if (selectedTab != "home") {
-                                        Log.d("MainActivity", "Returning to home tab, refreshing habits")
-                                        habitViewModel.refreshHabits()
-                                    }
+                        if (!isLandscape) {
+                            NavigationBar {
+                                NavigationBarItem(
+                                    selected = selectedTab == "home",
+                                    onClick = {
+                                        // If navigating back to home from another tab, refresh habits
+                                        if (selectedTab != "home") {
+                                            Log.d("MainActivity", "Returning to home tab, refreshing habits")
+                                            habitViewModel.refreshHabits()
+                                        }
+                                        lastSelectedTab = selectedTab
+                                        selectedTab = "home"
+                                    },
+                                    icon = { Icon(painterResource(id = R.drawable.ic_home), contentDescription = "Home") },
+                                    label = { Text("Home") }
+                                )
+                                NavigationBarItem(
+                                    selected = selectedTab == "add",
+                                    onClick = {
+                                        lastSelectedTab = selectedTab
+                                        selectedTab = "add"
+                                    },
+                                    icon = { Icon(painterResource(id = R.drawable.ic_add), contentDescription = "Add") },
+                                    label = { Text("New Habit") }
+                                )
+                                NavigationBarItem(
+                                    selected = selectedTab == "history",
+                                    onClick = {
+                                        lastSelectedTab = selectedTab
+                                        selectedTab = "history"
+                                    },
+                                    icon = { Icon(painterResource(id = R.drawable.ic_history), contentDescription = "History") },
+                                    label = { Text("History") }
+                                )
+                                NavigationBarItem(
+                                    selected = selectedTab == "settings",
+                                    onClick = {
+                                        lastSelectedTab = selectedTab
+                                        selectedTab = "settings"
+                                    },
+                                    icon = { Icon(painterResource(id = R.drawable.ic_settings), contentDescription = "Settings") },
+                                    label = { Text("Settings") }
+                                )
+                            }
+                        }
+                    }
+                ) { padding ->
+                    if (isLandscape) {
+                        // Landscape layout with side navigation
+                        Row(modifier = Modifier.fillMaxSize()) {
+                            // Side navigation bar
+                            NavigationRail {
+                                NavigationRailItem(
+                                    selected = selectedTab == "home",
+                                    onClick = {
+                                        if (selectedTab != "home") {
+                                            habitViewModel.refreshHabits()
+                                        }
+                                        lastSelectedTab = selectedTab
+                                        selectedTab = "home"
+                                    },
+                                    icon = { Icon(painterResource(id = R.drawable.ic_home), contentDescription = "Home") },
+                                    label = { Text("Home") }
+                                )
+
+                                NavigationRailItem(
+                                    selected = selectedTab == "add",
+                                    onClick = {
+                                        lastSelectedTab = selectedTab
+                                        selectedTab = "add"
+                                    },
+                                    icon = { Icon(painterResource(id = R.drawable.ic_add), contentDescription = "Add") },
+                                    label = { Text("New") }
+                                )
+
+                                NavigationRailItem(
+                                    selected = selectedTab == "history",
+                                    onClick = {
+                                        lastSelectedTab = selectedTab
+                                        selectedTab = "history"
+                                    },
+                                    icon = { Icon(painterResource(id = R.drawable.ic_history), contentDescription = "History") },
+                                    label = { Text("History") }
+                                )
+
+                                NavigationRailItem(
+                                    selected = selectedTab == "settings",
+                                    onClick = {
+                                        lastSelectedTab = selectedTab
+                                        selectedTab = "settings"
+                                    },
+                                    icon = { Icon(painterResource(id = R.drawable.ic_settings), contentDescription = "Settings") },
+                                    label = { Text("Settings") }
+                                )
+                            }
+
+                            // Content area
+                            Box(modifier = Modifier.weight(1f)) {
+                                when (selectedTab) {
+                                    "home" -> HomeScreen(
+                                        habits = habits,
+                                        onHabitToggle = { index -> habitViewModel.toggleHabitCompletion(index) },
+                                        onHabitDelete = { index -> habitViewModel.deleteHabit(index) },
+                                        quote = quote,
+                                        onAddHabitClick = { selectedTab = "add" },
+                                        modifier = Modifier.padding(padding),
+                                        onTabSelected = { lastSelectedTab = selectedTab; selectedTab = it },
+                                        isLandscape = true
+                                    )
+                                    "add" -> AddHabitForm(
+                                        onSave = { name, freq, reminder ->
+                                            habitViewModel.addHabit(
+                                                name = name,
+                                                iconRes = R.drawable.ic_exercise,
+                                                frequency = freq,
+                                                reminderTime = reminder
+                                            )
+                                            lastSelectedTab = selectedTab
+                                            selectedTab = "home"
+                                        },
+                                        onCancel = {
+                                            lastSelectedTab = selectedTab
+                                            selectedTab = "home"
+                                        },
+                                        isLandscape = true
+                                    )
+                                    "history" -> HistoryScreen(isLandscape = true)
+                                    "settings" -> SettingsScreen(
+                                        isDarkMode = userDarkMode,
+                                        onThemeToggle = { newMode ->
+                                            lifecycleScope.launch {
+                                                themePreference.updateTheme(newMode)
+                                            }
+                                        },
+                                        modifier = Modifier.padding(padding),
+                                        isLandscape = true
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        // Portrait mode content
+                        when (selectedTab) {
+                            "home" -> HomeScreen(
+                                habits = habits,
+                                onHabitToggle = { index -> habitViewModel.toggleHabitCompletion(index) },
+                                onHabitDelete = { index -> habitViewModel.deleteHabit(index) },
+                                quote = quote,
+                                onAddHabitClick = { selectedTab = "add" },
+                                modifier = Modifier.padding(padding),
+                                onTabSelected = { lastSelectedTab = selectedTab; selectedTab = it },
+                                isLandscape = false
+                            )
+                            "add" -> AddHabitForm(
+                                onSave = { name, freq, reminder ->
+                                    habitViewModel.addHabit(
+                                        name = name,
+                                        iconRes = R.drawable.ic_exercise,
+                                        frequency = freq,
+                                        reminderTime = reminder
+                                    )
                                     lastSelectedTab = selectedTab
                                     selectedTab = "home"
                                 },
-                                icon = { Icon(painterResource(id = R.drawable.ic_home), contentDescription = "Home") },
-                                label = { Text("Home") }
-                            )
-                            NavigationBarItem(
-                                selected = selectedTab == "add",
-                                onClick = {
+                                onCancel = {
                                     lastSelectedTab = selectedTab
-                                    selectedTab = "add"
+                                    selectedTab = "home"
                                 },
-                                icon = { Icon(painterResource(id = R.drawable.ic_add), contentDescription = "Add") },
-                                label = { Text("New Habit") }
+                                isLandscape = false
                             )
-                            NavigationBarItem(
-                                selected = selectedTab == "history",
-                                onClick = {
-                                    lastSelectedTab = selectedTab
-                                    selectedTab = "history"
+                            "history" -> HistoryScreen(isLandscape = false)
+                            "settings" -> SettingsScreen(
+                                isDarkMode = userDarkMode,
+                                onThemeToggle = { newMode ->
+                                    lifecycleScope.launch {
+                                        themePreference.updateTheme(newMode)
+                                    }
                                 },
-                                icon = { Icon(painterResource(id = R.drawable.ic_history), contentDescription = "History") },
-                                label = { Text("History") }
-                            )
-
-                            NavigationBarItem(
-                                selected = selectedTab == "settings",
-                                onClick = {
-                                    lastSelectedTab = selectedTab
-                                    selectedTab = "settings"
-                                },
-                                icon = { Icon(painterResource(id = R.drawable.ic_settings), contentDescription = "Settings") },
-                                label = { Text("Settings") }
+                                modifier = Modifier.padding(padding),
+                                isLandscape = false
                             )
                         }
-                    }
-
-                ) { padding ->
-                    when (selectedTab) {
-                        // navigate to home screen
-                        "home" -> HomeScreen(
-                            habits = habits,
-                            onHabitToggle = { index -> habitViewModel.toggleHabitCompletion(index) },
-                            onHabitDelete = { index -> habitViewModel.deleteHabit(index) },
-                            quote = quote,
-                            onAddHabitClick = { selectedTab = "add" },
-                            modifier = Modifier.padding(padding),
-                            onTabSelected = { lastSelectedTab = selectedTab; selectedTab = it },
-                        )
-                        // navigate to add new habit page
-                        "add" -> AddHabitForm(
-                            onSave = { name, freq, reminder ->
-                                habitViewModel.addHabit(
-                                    name = name,
-                                    iconRes = R.drawable.ic_exercise,
-                                    frequency = freq,
-                                    reminderTime = reminder
-                                )
-                                lastSelectedTab = selectedTab
-                                selectedTab = "home"
-                            },
-                            onCancel = {
-                                lastSelectedTab = selectedTab
-                                selectedTab = "home"
-                            }
-                        )
-
-                        "history" -> HistoryScreen()
-
-                        // Settings screen implementation
-                        "settings" -> SettingsScreen(
-                            isDarkMode = userDarkMode,
-                            onThemeToggle = { newMode ->
-                                lifecycleScope.launch {
-                                    themePreference.updateTheme(newMode)
-                                }
-                            },
-                            modifier = Modifier.padding(padding)
-                        )
                     }
                 }
             }

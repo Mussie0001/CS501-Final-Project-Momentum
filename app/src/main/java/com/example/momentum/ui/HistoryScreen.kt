@@ -23,50 +23,107 @@ import java.time.format.DateTimeFormatter
  * History screen composable function that can be called directly from your Activity
  */
 @Composable
-fun HistoryScreen() {
+fun HistoryScreen(isLandscape: Boolean = false) {
     // State to track which view is currently active
     var currentView by remember { mutableStateOf("weekly") }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-            .padding(top = 24.dp)
-    ) {
-        // Header
-        Text(
-            text = "Habit History",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-        )
-
-        // View toggle buttons
+    if (isLandscape) {
+        // Landscape layout
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.Center
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            FilterChip(
-                selected = currentView == "weekly",
-                onClick = { currentView = "weekly" },
-                label = { Text("Weekly View") },
-                modifier = Modifier.padding(end = 8.dp)
-            )
+            // Left panel - Controls and view selection
+            Column(
+                modifier = Modifier
+                    .weight(0.3f)
+                    .padding(end = 16.dp)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Habit History",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            FilterChip(
-                selected = currentView == "monthly",
-                onClick = { currentView = "monthly" },
-                label = { Text("Monthly View") }
-            )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = currentView == "weekly",
+                        onClick = { currentView = "weekly" },
+                        label = { Text("Weekly View") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    FilterChip(
+                        selected = currentView == "monthly",
+                        onClick = { currentView = "monthly" },
+                        label = { Text("Monthly View") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            // Right panel - Content view
+            Box(
+                modifier = Modifier
+                    .weight(0.7f)
+                    .fillMaxHeight()
+            ) {
+                // Content based on selected view
+                when (currentView) {
+                    "weekly" -> WeeklyView()
+                    "monthly" -> MonthlyHistoryView()
+                }
+            }
         }
+    } else {
+        // Portrait layout
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+                .padding(top = 24.dp)
+        ) {
+            // Header
+            Text(
+                text = "Habit History",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+            )
 
-        // Content based on selected view
-        when (currentView) {
-            "weekly" -> WeeklyView()
-            "monthly" -> MonthlyHistoryView()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                FilterChip(
+                    selected = currentView == "weekly",
+                    onClick = { currentView = "weekly" },
+                    label = { Text("Weekly View") },
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+
+                FilterChip(
+                    selected = currentView == "monthly",
+                    onClick = { currentView = "monthly" },
+                    label = { Text("Monthly View") }
+                )
+            }
+
+            // Content based on selected view
+            when (currentView) {
+                "weekly" -> WeeklyView()
+                "monthly" -> MonthlyHistoryView()
+            }
         }
     }
 }

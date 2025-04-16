@@ -27,7 +27,6 @@ import com.example.momentum.model.Habit
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -37,7 +36,8 @@ fun HomeScreen(
     onAddHabitClick: () -> Unit,
     quote: String,
     modifier: Modifier = Modifier,
-    onTabSelected: (String) -> Unit
+    onTabSelected: (String) -> Unit,
+    isLandscape: Boolean = false
 ) {
     val currentDate = remember {
         SimpleDateFormat("EEEE, MMMM d").format(Date())
@@ -94,85 +94,113 @@ fun HomeScreen(
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = true,
-                    onClick = { onTabSelected("home") },
-                    icon = { Icon(painterResource(id = R.drawable.ic_home), contentDescription = "Home") },
-                    label = { Text("Home") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { onTabSelected("add") },
-                    icon = { Icon(painterResource(id = R.drawable.ic_add), contentDescription = "Add") },
-                    label = { Text("New Habit") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { onTabSelected("history") },
-                    icon = { Icon(painterResource(id = R.drawable.ic_history), contentDescription = "History") },
-                    label = { Text("History") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { onTabSelected("settings") },
-                    icon = { Icon(painterResource(id = R.drawable.ic_settings), contentDescription = "Settings") },
-                    label = { Text("Settings") }
-                )
+            if (!isLandscape) {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = true,
+                        onClick = { onTabSelected("home") },
+                        icon = { Icon(painterResource(id = R.drawable.ic_home), contentDescription = "Home") },
+                        label = { Text("Home") }
+                    )
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = { onTabSelected("add") },
+                        icon = { Icon(painterResource(id = R.drawable.ic_add), contentDescription = "Add") },
+                        label = { Text("New Habit") }
+                    )
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = { onTabSelected("history") },
+                        icon = { Icon(painterResource(id = R.drawable.ic_history), contentDescription = "History") },
+                        label = { Text("History") }
+                    )
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = { onTabSelected("settings") },
+                        icon = { Icon(painterResource(id = R.drawable.ic_settings), contentDescription = "Settings") },
+                        label = { Text("Settings") }
+                    )
+                }
             }
         }
     ) { padding ->
-        Column(
-            modifier = modifier
-                .padding(padding)
-                .padding(horizontal = 24.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // app title
-            Text(
-                text = "Momentum",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 24.dp)
-            )
-            Text(
-                text = "Hi, today is $currentDate",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
-
-
-            // quote box
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(12.dp)
+        if (isLandscape) {
+            // Landscape layout
+            Row(
+                modifier = modifier
+                    .padding(padding)
+                    .fillMaxSize()
             ) {
-                Text(
-                    text = quote,
-                    modifier = Modifier.padding(16.dp),
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            // Habits section with summary
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            ) {
+                // Left panel: quote and date
                 Column(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .weight(0.4f)
+                        .padding(16.dp)
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    // app title
+                    Text(
+                        text = "Momentum",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp)
+                    )
+
+                    Text(
+                        text = "Hi, today is $currentDate",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                    )
+
+                    // quote box
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = quote,
+                            modifier = Modifier.padding(16.dp),
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    // Summary at the bottom
+                    Text(
+                        text = "$completedCount of ${habitsState.size} habits completed today",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                    )
+                }
+
+                // Right panel: habits list
+                Column(
+                    modifier = Modifier
+                        .weight(0.6f)
+                        .padding(16.dp)
+                        .fillMaxHeight()
+                ) {
+                    Text(
+                        text = "Today's Habits",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
                     // Habits list with LazyColumn for scrolling
                     if (habitsState.isEmpty()) {
                         Box(
@@ -218,24 +246,131 @@ fun HomeScreen(
                             }
                         }
                     }
+                }
+            }
+        } else {
+            // Portrait layout - FIXED VERSION
+            Column(
+                modifier = modifier
+                    .padding(padding)
+                    .padding(horizontal = 24.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // app title
+                Text(
+                    text = "Momentum",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp)
+                )
 
-                    // Summary section at the bottom
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                Text(
+                    text = "Hi, today is $currentDate",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                )
 
+                // quote box
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
                     Text(
-                        text = "$completedCount of ${habitsState.size} habits completed today",
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp)
+                        text = quote,
+                        modifier = Modifier.padding(16.dp),
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
+                }
+
+                // Habits section title
+                Text(
+                    text = "Today's Habits",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+
+                // Habits list with LazyColumn for scrolling
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        if (habitsState.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "No habits yet! Tap 'New Habit' to add one.",
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth(),
+                                contentPadding = PaddingValues(vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                itemsIndexed(
+                                    items = habitsState,
+                                    key = { _, habit -> habit.id }
+                                ) { index, habit ->
+                                    key(habit.id, habit.isCompleted) {
+                                        HabitItem(
+                                            habit = habit,
+                                            onToggle = {
+                                                handleToggle(index)
+                                            },
+                                            onDelete = {
+                                                habitToDelete = index
+                                                showDeleteDialog = true
+                                            }
+                                        )
+                                    }
+
+                                    if (index < habitsState.size - 1) {
+                                        Divider(modifier = Modifier.padding(vertical = 4.dp))
+                                    }
+                                }
+                            }
+                        }
+
+                        // Summary section at the bottom
+                        Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                        Text(
+                            text = "$completedCount of ${habitsState.size} habits completed today",
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp)
+                        )
+                    }
                 }
             }
         }
     }
 }
-
 @Composable
 fun HabitItem(
     habit: Habit,
