@@ -22,7 +22,8 @@ class HabitRepository(private val habitDao: HabitDao) {
             id = this.id,
             name = this.name,
             iconRes = this.iconRes,
-            isCompleted = isCompleted
+            isCompleted = isCompleted,
+            iconImageUri = iconImageUri
         )
     }
 
@@ -32,7 +33,8 @@ class HabitRepository(private val habitDao: HabitDao) {
             name = this.name,
             iconRes = this.iconRes,
             frequency = frequency,
-            reminderTime = reminderTime
+            reminderTime = reminderTime,
+            iconImageUri = iconImageUri
         )
     }
 
@@ -72,14 +74,21 @@ class HabitRepository(private val habitDao: HabitDao) {
     }
 
     // Add a new habit
-    suspend fun addHabit(name: String, iconRes: Int, frequency: Int = 1, reminderTime: String? = null): Long {
-        val habitEntity = HabitEntity(
+    suspend fun addHabit(
+        name: String,
+        iconRes: Int,
+        frequency: Int,
+        reminderTime: String?,
+        iconImageUri: String? = null
+    ) {
+        val habit = HabitEntity(
             name = name,
             iconRes = iconRes,
             frequency = frequency,
-            reminderTime = reminderTime
+            reminderTime = reminderTime,
+            iconImageUri = iconImageUri
         )
-        return habitDao.insertHabit(habitEntity)
+        habitDao.insertHabit(habit)
     }
 
     // Update an existing habit
