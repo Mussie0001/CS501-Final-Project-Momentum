@@ -15,7 +15,7 @@ import com.example.momentum.data.util.DateConverter
  */
 @Database(
     entities = [HabitEntity::class, HabitCompletionEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(DateConverter::class)

@@ -78,6 +78,8 @@ dependencies {
     implementation(libs.androidx.material3.navigationbar)
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
+    implementation(libs.coil.compose)
+
 
     // Coroutines
     implementation(libs.coroutines.core)

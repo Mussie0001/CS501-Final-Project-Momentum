@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import coil.compose.rememberAsyncImagePainter
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -408,14 +409,23 @@ fun HabitItem(
                 color = Color(0xFFE0E0E0),
                 modifier = Modifier.size(48.dp)
             ) {
-                Image(
-                    painter = painterResource(id = habit.iconRes),
-                    contentDescription = habit.name,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .padding(4.dp)
-                        .align(Alignment.CenterVertically)
-                )
+                if (habit.iconImageUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(model = habit.iconImageUri),
+                        contentDescription = habit.name,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = habit.iconRes),
+                        contentDescription = habit.name,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp)
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
