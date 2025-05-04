@@ -1,5 +1,6 @@
 package com.example.momentum.data.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
@@ -19,5 +20,6 @@ data class HabitEntity(
     val frequency: Int = 1, // How many times per day this habit should be completed
     val reminderTime: String? = null,
     val activeDays: String = "0,1,2,3,4,5,6", // Default: all days active (stored as comma-separated day indices)
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    @ColumnInfo(name = "icon_image_uri") val iconImageUri: String? = null
 )

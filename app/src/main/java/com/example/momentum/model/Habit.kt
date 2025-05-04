@@ -47,3 +47,5 @@ data class Habit(
         return this
     }
 }
+    val iconImageUri: String? = null
+)

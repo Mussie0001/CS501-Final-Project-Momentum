@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import coil.compose.rememberAsyncImagePainter
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -370,6 +372,120 @@ fun HomeScreen(
                                 .padding(bottom = 16.dp)
                         )
                     }
+                }
+            }
+        }
+    }
+}
+@Composable
+fun HabitItem(
+    habit: Habit,
+    onToggle: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var showMenu by remember { mutableStateOf(false) }
+
+    LaunchedEffect(habit.id, habit.isCompleted) {
+        Log.d("HabitItem", "Rendering habit: ${habit.name}, completed: ${habit.isCompleted}")
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                onToggle()
+                Log.d("HabitItem", "Clicked habit: ${habit.name}")
+            },
+        colors = CardDefaults.cardColors(
+            containerColor = if (habit.isCompleted)
+                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+            else
+                MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = Color(0xFFE0E0E0),
+                modifier = Modifier.size(48.dp)
+            ) {
+                if (habit.iconImageUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(model = habit.iconImageUri),
+                        contentDescription = habit.name,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = habit.iconRes),
+                        contentDescription = habit.name,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = habit.name,
+                modifier = Modifier.weight(1f)
+            )
+
+            // Visual cues for habit completion
+            if (habit.isCompleted) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                    shape = RoundedCornerShape(4.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Completed",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(4.dp)
+                    )
+                }
+            }
+
+            // Context menu
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = "More options"
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Delete Habit")
+                            }
+                        },
+                        onClick = {
+                            showMenu = false
+                            onDelete()
+                        }
+                    )
                 }
             }
         }
