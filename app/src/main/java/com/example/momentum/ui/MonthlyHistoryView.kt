@@ -68,8 +68,22 @@ fun MonthlyHistoryView(
         completionsRange.values.flatten().toSet()
     }
     val habitsForSelectedDate = remember(completionsRange, selectedLocalDate, habits) {
-        val ids = completionsRange.filter { it.value.contains(selectedLocalDate) }.keys
-        ids.mapNotNull { id -> habits.find { it.id == id }?.name }
+        // Map of habit names to completion counts
+        val habitCompletions = mutableMapOf<String, Int>()
+
+        // Count completions per habit
+        completionsRange.forEach { (habitId, dates) ->
+            if (dates.contains(selectedLocalDate)) {
+                val habit = habits.find { it.id == habitId }
+                if (habit != null) {
+                    // Count how many times this habit was completed on selected date
+                    val countOnDate = dates.count { it == selectedLocalDate }
+                    habitCompletions[habit.name] = (habitCompletions[habit.name] ?: 0) + countOnDate
+                }
+            }
+        }
+
+        habitCompletions
     }
 
     Column(
@@ -125,8 +139,11 @@ fun MonthlyHistoryView(
                         .weight(1f)
                         .padding(horizontal = 16.dp)
                 ) {
-                    items(habitsForSelectedDate) { name ->
-                        HabitCompletionItem(habitName = name)
+                    items(habitsForSelectedDate.toList()) { (habitName, completionCount) ->
+                        HabitCompletionItem(
+                            habitName = habitName,
+                            completionCount = completionCount
+                        )
                     }
                 }
             }

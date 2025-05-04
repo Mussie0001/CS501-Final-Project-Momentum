@@ -128,75 +128,7 @@ fun HistoryScreen(isLandscape: Boolean = false) {
     }
 }
 
-//@Composable
-//private fun WeeklyView() {
-//    // Days row
-//    val currentDate = LocalDate.of(2025, 4, 1)
-//    val days = listOf(
-//        LocalDate.of(2025, 3, 29),
-//        LocalDate.of(2025, 3, 30),
-//        LocalDate.of(2025, 3, 31),
-//        LocalDate.of(2025, 4, 1),
-//        LocalDate.of(2025, 4, 2),
-//        LocalDate.of(2025, 4, 3)
-//    )
-//
-//    // Sample habits
-//    val habits = listOf("Morning Walk", "Read 30 mins", "Drink Water", "Meditate")
-//
-//    // Completed habits map (random for past days)
-//    val completedHabits = mapOf(
-//        LocalDate.of(2025, 3, 29) to listOf("Morning Walk", "Meditate"),
-//        LocalDate.of(2025, 3, 30) to listOf("Read 30 mins", "Drink Water"),
-//        LocalDate.of(2025, 3, 31) to listOf("Morning Walk", "Drink Water"),
-//        LocalDate.of(2025, 4, 1) to emptyList(),
-//        LocalDate.of(2025, 4, 2) to emptyList(),
-//        LocalDate.of(2025, 4, 3) to emptyList()
-//    )
-//
-//    Card(
-//        modifier = Modifier.fillMaxWidth(),
-//        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-//        shape = RoundedCornerShape(16.dp)
-//    ) {
-//        Column(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(16.dp)
-//        ) {
-//            // Days header
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.SpaceBetween
-//            ) {
-//                days.forEach { date ->
-//                    DayHeader(
-//                        date = date,
-//                        isCurrentDay = date.isEqual(currentDate),
-//                        modifier = Modifier.weight(1f)
-//                    )
-//                }
-//            }
-//
-//            Divider(
-//                modifier = Modifier.padding(vertical = 12.dp),
-//                color = Color.LightGray
-//            )
-//
-//            // Habits and their completion status
-//            habits.forEach { habit ->
-//                HabitRow(
-//                    habitName = habit,
-//                    days = days,
-//                    completedHabits = completedHabits,
-//                    currentDate = currentDate
-//                )
-//
-//                Spacer(modifier = Modifier.height(12.dp))
-//            }
-//        }
-//    }
-//}
+
 
 @Composable
 private fun DayHeader(
