@@ -218,7 +218,7 @@ class MainActivity : ComponentActivity() {
                                 when (selectedTab) {
                                     "home" -> HomeScreen(
                                         habits = habits,
-                                        onHabitToggle = { index -> habitViewModel.toggleHabitCompletion(index) },
+                                        onHabitToggle = { habitIndex, completionIndex -> habitViewModel.toggleHabitCompletion(habitIndex, completionIndex) },
                                         onHabitDelete = { index -> habitViewModel.deleteHabit(index) },
                                         quote = quote,
                                         onAddHabitClick = { selectedTab = "add" },
@@ -262,7 +262,7 @@ class MainActivity : ComponentActivity() {
                         when (selectedTab) {
                             "home" -> HomeScreen(
                                 habits = habits,
-                                onHabitToggle = { index -> habitViewModel.toggleHabitCompletion(index) },
+                                onHabitToggle = { habitIndex, completionIndex -> habitViewModel.toggleHabitCompletion(habitIndex, completionIndex) },
                                 onHabitDelete = { index -> habitViewModel.deleteHabit(index) },
                                 quote = quote,
                                 onAddHabitClick = { selectedTab = "add" },
@@ -327,7 +327,6 @@ class MainActivity : ComponentActivity() {
      * Populates the database with sample habits if the database is empty
      */
     private suspend fun populateSampleData() = withContext(Dispatchers.IO) {
-        // Keep your existing logic, but now it runs on IO thread
         val currentHabits = habitViewModel.habits.value
         if (currentHabits.isEmpty()) {
             Log.d("MainActivity", "Populating sample data")
@@ -349,10 +348,10 @@ class MainActivity : ComponentActivity() {
             // Complete "Drink Water" and "Study" for demo
             val updatedHabits = habitViewModel.habits.value
             updatedHabits.indexOfFirst { it.name == "Drink Water" }.takeIf { it >= 0 }?.let {
-                habitViewModel.toggleHabitCompletion(it)
+                habitViewModel.toggleHabitCompletion(it, 0)
             }
             updatedHabits.indexOfFirst { it.name == "Study" }.takeIf { it >= 0 }?.let {
-                habitViewModel.toggleHabitCompletion(it)
+                habitViewModel.toggleHabitCompletion(it, 0)
             }
         }
     }
