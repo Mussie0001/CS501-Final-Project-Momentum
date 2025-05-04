@@ -51,20 +51,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialize theme preference
         themePreference = ThemePreference(this)
 
-        // Initialize database and repository
         database = MomentumDatabase.getDatabase(this)
         repository = HabitRepository(database.habitDao())
 
-        // Initialize ViewModel
         habitViewModel = ViewModelProvider(
             this,
             HabitViewModel.Factory(repository)
         )[HabitViewModel::class.java]
 
-        // Clean up duplicates and populate sample data if needed
         lifecycleScope.launch(Dispatchers.IO) {
             val prefs = getSharedPreferences("momentum_prefs", MODE_PRIVATE)
             val isDbInitialized = prefs.getBoolean("db_initialized", false)
@@ -227,12 +223,13 @@ class MainActivity : ComponentActivity() {
                                         isLandscape = true
                                     )
                                     "add" -> AddHabitForm(
-                                        onSave = { name, freq, reminder ->
+                                        onSave = { name, freq, reminder, iconImageUri ->
                                             habitViewModel.addHabit(
                                                 name = name,
-                                                iconRes = R.drawable.ic_exercise,
+                                                iconRes = R.drawable.ic_exercise, // still used as fallback/default
                                                 frequency = freq,
-                                                reminderTime = reminder
+                                                reminderTime = reminder,
+                                                iconImageUri = iconImageUri
                                             )
                                             lastSelectedTab = selectedTab
                                             selectedTab = "home"
@@ -271,12 +268,13 @@ class MainActivity : ComponentActivity() {
                                 isLandscape = false
                             )
                             "add" -> AddHabitForm(
-                                onSave = { name, freq, reminder ->
+                                onSave = { name, freq, reminder, iconImageUri ->
                                     habitViewModel.addHabit(
                                         name = name,
-                                        iconRes = R.drawable.ic_exercise,
+                                        iconRes = R.drawable.ic_exercise, // still used as fallback/default
                                         frequency = freq,
-                                        reminderTime = reminder
+                                        reminderTime = reminder,
+                                        iconImageUri = iconImageUri
                                     )
                                     lastSelectedTab = selectedTab
                                     selectedTab = "home"
@@ -342,7 +340,9 @@ class MainActivity : ComponentActivity() {
                 repository.addHabit(
                     name = name,
                     iconRes = icon,
-                    frequency = frequency
+                    frequency = frequency,
+                    reminderTime = null,
+                    iconImageUri = null
                 )
             }
 

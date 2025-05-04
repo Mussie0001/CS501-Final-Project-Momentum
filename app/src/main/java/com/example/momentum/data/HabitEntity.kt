@@ -1,5 +1,6 @@
 package com.example.momentum.data.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -14,5 +15,6 @@ data class HabitEntity(
     val iconRes: Int,
     val frequency: Int = 1,
     val reminderTime: String? = null,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    @ColumnInfo(name = "icon_image_uri") val iconImageUri: String? = null
 )
