@@ -227,12 +227,13 @@ class MainActivity : ComponentActivity() {
                                         isLandscape = true
                                     )
                                     "add" -> AddHabitForm(
-                                        onSave = { name, freq, reminder ->
+                                        onSave = { name, freq, reminder, activeDays ->
                                             habitViewModel.addHabit(
                                                 name = name,
                                                 iconRes = R.drawable.ic_exercise,
                                                 frequency = freq,
-                                                reminderTime = reminder
+                                                reminderTime = reminder,
+                                                activeDays = activeDays
                                             )
                                             lastSelectedTab = selectedTab
                                             selectedTab = "home"
@@ -271,12 +272,13 @@ class MainActivity : ComponentActivity() {
                                 isLandscape = false
                             )
                             "add" -> AddHabitForm(
-                                onSave = { name, freq, reminder ->
+                                onSave = { name, freq, reminder, activeDays ->
                                     habitViewModel.addHabit(
                                         name = name,
                                         iconRes = R.drawable.ic_exercise,
                                         frequency = freq,
-                                        reminderTime = reminder
+                                        reminderTime = reminder,
+                                        activeDays = activeDays
                                     )
                                     lastSelectedTab = selectedTab
                                     selectedTab = "home"

@@ -9,16 +9,19 @@ import com.example.momentum.data.dao.HabitDao
 import com.example.momentum.data.entity.HabitCompletionEntity
 import com.example.momentum.data.entity.HabitEntity
 import com.example.momentum.data.util.DateConverter
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.momentum.data.util.StringListConverter
 
 /**
  * Main database class for the Momentum app
  */
 @Database(
     entities = [HabitEntity::class, HabitCompletionEntity::class],
-    version = 1,
+    version = 2, // new version
     exportSchema = false
 )
-@TypeConverters(DateConverter::class)
+@TypeConverters(DateConverter::class, StringListConverter::class)
 abstract class MomentumDatabase : RoomDatabase() {
 
     abstract fun habitDao(): HabitDao
@@ -34,7 +37,7 @@ abstract class MomentumDatabase : RoomDatabase() {
                     MomentumDatabase::class.java,
                     "momentum_database"
                 )
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration() // recreate the database
                     .build()
                 INSTANCE = instance
                 instance

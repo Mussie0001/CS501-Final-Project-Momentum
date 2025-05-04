@@ -44,11 +44,15 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         }
     }
 
-    // Add a new habit with frequency support
-    fun addHabit(name: String, iconRes: Int, frequency: Int = 1, reminderTime: String? = null) {
+    fun addHabit(
+        name: String,
+        iconRes: Int,
+        frequency: Int = 1,
+        reminderTime: String? = null,
+        activeDays: Set<Int> = setOf(0, 1, 2, 3, 4, 5, 6) // Default: all days
+    ) {
         viewModelScope.launch {
-            repository.addHabit(name, iconRes, frequency, reminderTime)
-            // Refresh to ensure the UI updates
+            repository.addHabit(name, iconRes, frequency, reminderTime, activeDays)
             refreshHabits()
         }
     }

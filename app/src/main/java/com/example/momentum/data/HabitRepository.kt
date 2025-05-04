@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.momentum.data.dao.HabitDao
 import com.example.momentum.data.entity.HabitCompletionEntity
 import com.example.momentum.data.entity.HabitEntity
+import com.example.momentum.data.util.StringListConverter
 import com.example.momentum.model.Habit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -11,11 +12,10 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
-/**
- * Repository class to handle habit and habit completion data operations
- * with support for multiple completions per day based on frequency
- */
+
 class HabitRepository(private val habitDao: HabitDao) {
+
+    private val stringListConverter = StringListConverter()
 
     // Convert between domain model and entity
     private fun HabitEntity.toModel(completions: List<LocalDate> = emptyList()): Habit {
@@ -25,6 +25,7 @@ class HabitRepository(private val habitDao: HabitDao) {
             iconRes = this.iconRes,
             frequency = this.frequency,
             reminderTime = this.reminderTime,
+            activeDays = stringListConverter.fromString(this.activeDays),
             completions = completions,
             isCompleted = completions.isNotEmpty() // For backward compatibility
         )
@@ -36,7 +37,9 @@ class HabitRepository(private val habitDao: HabitDao) {
             name = this.name,
             iconRes = this.iconRes,
             frequency = this.frequency,
-            reminderTime = this.reminderTime
+            reminderTime = this.reminderTime,
+            activeDays = stringListConverter.toString(this.activeDays),
+            createdAt = System.currentTimeMillis()
         )
     }
 
@@ -56,21 +59,30 @@ class HabitRepository(private val habitDao: HabitDao) {
         val startOfDay = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val endOfDay = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() - 1
 
+        // Get the current day of week (0-6, Monday to Sunday)
+        val todayDayOfWeek = LocalDate.now().dayOfWeek.value - 1
+
         return habitDao.getAllHabits().map { habitEntities ->
-            habitEntities.map { habitEntity ->
-                // Get all completions for this habit today
-                val todayCompletions = habitDao.getHabitCompletionsInTimeRange(
-                    habitId = habitEntity.id,
-                    startTime = startOfDay,
-                    endTime = endOfDay
-                )
+            habitEntities
+                .filter { entity ->
+                    // Only include habits active today
+                    val activeDays = stringListConverter.fromString(entity.activeDays)
+                    todayDayOfWeek in activeDays
+                }
+                .map { habitEntity ->
+                    // Get all completions for this habit today
+                    val todayCompletions = habitDao.getHabitCompletionsInTimeRange(
+                        habitId = habitEntity.id,
+                        startTime = startOfDay,
+                        endTime = endOfDay
+                    )
 
-                // Convert to LocalDate objects for the model
-                val completionDates = todayCompletions.map { it.completedDate.toLocalDate() }
+                    // Convert to LocalDate objects for the model
+                    val completionDates = todayCompletions.map { it.completedDate.toLocalDate() }
 
-                // Create the model with today's completions
-                habitEntity.toModel(completionDates)
-            }
+                    // Create the model with today's completions
+                    habitEntity.toModel(completionDates)
+                }
         }
     }
 
@@ -107,12 +119,19 @@ class HabitRepository(private val habitDao: HabitDao) {
     }
 
     // Add a new habit
-    suspend fun addHabit(name: String, iconRes: Int, frequency: Int = 1, reminderTime: String? = null): Long {
+    suspend fun addHabit(
+        name: String,
+        iconRes: Int,
+        frequency: Int = 1,
+        reminderTime: String? = null,
+        activeDays: Set<Int> = setOf(0, 1, 2, 3, 4, 5, 6) // Default: all days
+    ): Long {
         val habitEntity = HabitEntity(
             name = name,
             iconRes = iconRes,
             frequency = frequency,
-            reminderTime = reminderTime
+            reminderTime = reminderTime,
+            activeDays = stringListConverter.toString(activeDays)
         )
         return habitDao.insertHabit(habitEntity)
     }

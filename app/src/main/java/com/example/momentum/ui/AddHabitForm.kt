@@ -7,15 +7,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.momentum.ui.components.DaySelector
+
 @Composable
 fun AddHabitForm(
-    onSave: (name: String, frequency: Int, reminderTime: String?) -> Unit,
+    onSave: (name: String, frequency: Int, reminderTime: String?, activeDays: Set<Int>) -> Unit,
     onCancel: () -> Unit,
     isLandscape: Boolean = false
 ) {
     var name by remember { mutableStateOf("") }
     var frequency by remember { mutableStateOf(1) }
     var reminderTime by remember { mutableStateOf("") }
+
+    // Initialize with all days selected (Monday = 0, Sunday = 6)
+    var selectedDays by remember { mutableStateOf(setOf(0, 1, 2, 3, 4, 5, 6)) }
 
     if (isLandscape) {
         // Landscape layout
@@ -41,7 +46,7 @@ fun AddHabitForm(
                 )
 
                 Text(
-                    text = "Create a new habit to track your daily progress. Set how often you want to complete this habit each day.",
+                    text = "Create a new habit to track your daily progress. Set how often you want to complete this habit each day and which days of the week it should appear.",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -76,7 +81,7 @@ fun AddHabitForm(
 
                 OutlinedTextField(
                     value = frequency.toString(),
-                    onValueChange = { it.toIntOrNull()?.let { freq -> frequency = freq } },
+                    onValueChange = { it.toIntOrNull()?.let { freq -> frequency = maxOf(1, freq) } },
                     label = { Text("Frequency per day") },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -88,6 +93,24 @@ fun AddHabitForm(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Day selector
+                DaySelector(
+                    selectedDays = selectedDays,
+                    onDayToggle = { dayIndex ->
+                        selectedDays = if (dayIndex in selectedDays) {
+                            // Don't allow removing the last day
+                            if (selectedDays.size > 1) {
+                                selectedDays - dayIndex
+                            } else {
+                                selectedDays
+                            }
+                        } else {
+                            selectedDays + dayIndex
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 Spacer(modifier = Modifier.weight(1f))
 
                 Row(
@@ -96,7 +119,12 @@ fun AddHabitForm(
                 ) {
                     Button(
                         onClick = {
-                            onSave(name, frequency, if (reminderTime.isBlank()) null else reminderTime)
+                            onSave(
+                                name,
+                                frequency,
+                                if (reminderTime.isBlank()) null else reminderTime,
+                                selectedDays
+                            )
                         },
                         enabled = name.isNotBlank(),
                         modifier = Modifier.weight(1f)
@@ -138,7 +166,7 @@ fun AddHabitForm(
 
             OutlinedTextField(
                 value = frequency.toString(),
-                onValueChange = { it.toIntOrNull()?.let { freq -> frequency = freq } },
+                onValueChange = { it.toIntOrNull()?.let { freq -> frequency = maxOf(1, freq) } },
                 label = { Text("Frequency per day") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -150,17 +178,76 @@ fun AddHabitForm(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Day selector
+            DaySelector(
+                selectedDays = selectedDays,
+                onDayToggle = { dayIndex ->
+                    selectedDays = if (dayIndex in selectedDays) {
+                        // Don't allow removing the last day
+                        if (selectedDays.size > 1) {
+                            selectedDays - dayIndex
+                        } else {
+                            selectedDays
+                        }
+                    } else {
+                        selectedDays + dayIndex
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Button(
                     onClick = {
-                        onSave(name, frequency, if (reminderTime.isBlank()) null else reminderTime)
+                        onSave(
+                            name,
+                            frequency,
+                            if (reminderTime.isBlank()) null else reminderTime,
+                            selectedDays
+                        )
                     },
-                    enabled = name.isNotBlank()
+                    enabled = name.isNotBlank(),
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text("Save")
                 }
 
-                OutlinedButton(onClick = onCancel) {
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Cancel")
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Button(
+                    onClick = {
+                        onSave(
+                            name,
+                            frequency,
+                            if (reminderTime.isBlank()) null else reminderTime,
+                            selectedDays
+                        )
+                    },
+                    enabled = name.isNotBlank(),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Save")
+                }
+
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text("Cancel")
                 }
             }
