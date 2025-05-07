@@ -37,18 +37,17 @@ fun HomeScreen(
     }
 
     // State list for habit recomposition (checkmarks)
-    val habitsState = remember(habits) { habits.toMutableStateList() }
-
+    //val habitsState by rememberUpdatedState(newValue = habits)
     // Count total and completed sub-habits
-    val totalCompletions = habitsState.sumOf { it.frequency }
-    val completedCount = habitsState.sumOf { it.completions.size }
+    val totalCompletions = habits.sumOf { it.frequency }
+    val completedCount = habits.sumOf { it.completions.size }
 
     val calculateTotalCompletions = {
-        habitsState.sumOf { it.completions.size }
+        habits.sumOf { it.completions.size }
     }
 
     val calculateTotalRequired = {
-        habitsState.sumOf { it.frequency }
+        habits.sumOf { it.frequency }
     }
 
     // Delete confirmation dialog
@@ -206,7 +205,7 @@ fun HomeScreen(
                     )
 
                     // Habits list with LazyColumn for scrolling
-                    if (habitsState.isEmpty()) {
+                    if (habits.isEmpty()) {
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -228,7 +227,7 @@ fun HomeScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             itemsIndexed(
-                                items = habitsState,
+                                items = habits,
                                 key = { _, habit -> habit.id }
                             ) { index, habit ->
                                 key(habit.id, habit.completions.size) {
@@ -244,7 +243,7 @@ fun HomeScreen(
                                     )
                                 }
 
-                                if (index < habitsState.size - 1) {
+                                if (index < habits.size - 1) {
                                     Divider(modifier = Modifier.padding(vertical = 4.dp))
                                 }
                             }
@@ -313,7 +312,7 @@ fun HomeScreen(
                     Column(
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        if (habitsState.isEmpty()) {
+                        if (habits.isEmpty()) {
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -335,7 +334,7 @@ fun HomeScreen(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 itemsIndexed(
-                                    items = habitsState,
+                                    items = habits,
                                     key = { _, habit -> habit.id }
                                 ) { index, habit ->
                                     key(habit.id, habit.completions.size) {
@@ -351,7 +350,7 @@ fun HomeScreen(
                                         )
                                     }
 
-                                    if (index < habitsState.size - 1) {
+                                    if (index < habits.size - 1) {
                                         Divider(modifier = Modifier.padding(vertical = 4.dp))
                                     }
                                 }

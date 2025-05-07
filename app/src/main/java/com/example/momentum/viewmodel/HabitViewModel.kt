@@ -40,7 +40,7 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         val habit = habits.value[habitIndex]
         viewModelScope.launch {
             repository.toggleHabitCompletion(habit, completionIndex)
-            // The Flow will automatically update due to flatMapLatest
+            refreshHabits()
         }
     }
 

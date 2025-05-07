@@ -16,7 +16,8 @@ fun AddHabitForm(
     isLandscape: Boolean = false
 ) {
     var name by remember { mutableStateOf("") }
-    var frequency by remember { mutableStateOf(1) }
+    var frequencyInput by remember { mutableStateOf("") }
+    val frequency = frequencyInput.toIntOrNull()?.coerceIn(1, 5)
     var reminderTime by remember { mutableStateOf("") }
 
     // Initialize with all days selected (Monday = 0, Sunday = 6)
@@ -80,9 +81,11 @@ fun AddHabitForm(
                 )
 
                 OutlinedTextField(
-                    value = frequency.toString(),
-                    onValueChange = { it.toIntOrNull()?.let { freq -> frequency = maxOf(1, freq) } },
-                    label = { Text("Frequency per day") },
+                    value = frequencyInput,
+                    onValueChange = { input ->
+                        frequencyInput = input.filter { it.isDigit() }.take(1)
+                    },
+                    label = { Text("Frequency per day (1–5)") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -119,14 +122,16 @@ fun AddHabitForm(
                 ) {
                     Button(
                         onClick = {
-                            onSave(
-                                name,
-                                frequency,
-                                if (reminderTime.isBlank()) null else reminderTime,
-                                selectedDays
-                            )
+                            if (frequency != null) {
+                                onSave(
+                                    name,
+                                    frequency,
+                                    if (reminderTime.isBlank()) null else reminderTime,
+                                    selectedDays
+                                )
+                            }
                         },
-                        enabled = name.isNotBlank(),
+                        enabled = name.isNotBlank() && frequency != null,
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Save")
@@ -166,7 +171,9 @@ fun AddHabitForm(
 
             OutlinedTextField(
                 value = frequency.toString(),
-                onValueChange = { it.toIntOrNull()?.let { freq -> frequency = maxOf(1, freq) } },
+                onValueChange = { input ->
+                    frequencyInput = input.filter { it.isDigit() }.take(1)
+                },
                 label = { Text("Frequency per day") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -202,12 +209,14 @@ fun AddHabitForm(
             ) {
                 Button(
                     onClick = {
-                        onSave(
-                            name,
-                            frequency,
-                            if (reminderTime.isBlank()) null else reminderTime,
-                            selectedDays
-                        )
+                        if (frequency != null) {
+                            onSave(
+                                name,
+                                frequency,
+                                if (reminderTime.isBlank()) null else reminderTime,
+                                selectedDays
+                            )
+                        }
                     },
                     enabled = name.isNotBlank(),
                     modifier = Modifier.weight(1f)
@@ -231,12 +240,14 @@ fun AddHabitForm(
             ) {
                 Button(
                     onClick = {
-                        onSave(
-                            name,
-                            frequency,
-                            if (reminderTime.isBlank()) null else reminderTime,
-                            selectedDays
-                        )
+                        if (frequency != null) {
+                            onSave(
+                                name,
+                                frequency,
+                                if (reminderTime.isBlank()) null else reminderTime,
+                                selectedDays
+                            )
+                        }
                     },
                     enabled = name.isNotBlank(),
                     modifier = Modifier.weight(1f)

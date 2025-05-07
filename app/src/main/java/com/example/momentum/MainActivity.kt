@@ -107,7 +107,7 @@ class MainActivity : ComponentActivity() {
                 var quote by rememberSaveable { mutableStateOf("") }
 
                 // Collect habits from ViewModel as a state
-                val habits = habitViewModel.habits.collectAsStateWithLifecycle().value
+                val habits by habitViewModel.habits.collectAsStateWithLifecycle()
 
                 LaunchedEffect(true) {
                     if (quote.isEmpty()) {
