@@ -63,9 +63,22 @@ fun WeeklyView(
         completionsRange.values.flatten().toSet()
     }
     val habitsForSelectedDate = remember(completionsRange, selectedLocalDate, habits) {
-        completionsRange.filter { it.value.contains(selectedLocalDate) }
-            .keys
-            .mapNotNull { id -> habits.find { it.id == id }?.name }
+        // Map of habit names to completion counts
+        val habitCompletions = mutableMapOf<String, Int>()
+
+        // Count completions per habit
+        completionsRange.forEach { (habitId, dates) ->
+            if (dates.contains(selectedLocalDate)) {
+                val habit = habits.find { it.id == habitId }
+                if (habit != null) {
+                    // Count how many times this habit was completed on selected date
+                    val countOnDate = dates.count { it == selectedLocalDate }
+                    habitCompletions[habit.name] = (habitCompletions[habit.name] ?: 0) + countOnDate
+                }
+            }
+        }
+
+        habitCompletions
     }
 
     // 5) column with dynamic padding
@@ -124,8 +137,11 @@ fun WeeklyView(
                         .weight(1f)
                         .padding(horizontal = 16.dp)
                 ) {
-                    items(habitsForSelectedDate) { habitName ->
-                        HabitCompletionItem(habitName = habitName)
+                    items(habitsForSelectedDate.toList()) { (habitName, completionCount) ->
+                        HabitCompletionItem(
+                            habitName = habitName,
+                            completionCount = completionCount
+                        )
                     }
                 }
             }
@@ -297,7 +313,10 @@ fun DayCell(
 }
 
 @Composable
-fun String.HabitCompletionItem() {
+fun HabitCompletionItem(
+    habitName: String,
+    completionCount: Int = 1 // New parameter for number of completions
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -313,17 +332,27 @@ fun String.HabitCompletionItem() {
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = "Completed",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
-            )
+            // Row of checkmarks for multiple completions
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.width(IntrinsicSize.Min)
+            ) {
+                // Show multiple checkmarks based on completion count
+                repeat(completionCount) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Completed",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.width(12.dp))
 
             Text(
-                text = this@HabitCompletionItem,
+                text = habitName,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium
             )

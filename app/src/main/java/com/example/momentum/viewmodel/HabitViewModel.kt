@@ -35,20 +35,24 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         }
     }
 
-    // Toggle a habit completion status
-    fun toggleHabitCompletion(index: Int) {
-        val habit = habits.value[index]
+    // Toggle a habit completion status with completion index
+    fun toggleHabitCompletion(habitIndex: Int, completionIndex: Int) {
+        val habit = habits.value[habitIndex]
         viewModelScope.launch {
-            repository.toggleHabitCompletion(habit)
+            repository.toggleHabitCompletion(habit, completionIndex)
             // The Flow will automatically update due to flatMapLatest
         }
     }
 
-    // Add a new habit
-    fun addHabit(name: String, iconRes: Int, frequency: Int = 1, reminderTime: String? = null) {
+    fun addHabit(
+        name: String,
+        iconRes: Int,
+        frequency: Int = 1,
+        reminderTime: String? = null,
+        activeDays: Set<Int> = setOf(0, 1, 2, 3, 4, 5, 6) // Default: all days
+    ) {
         viewModelScope.launch {
-            repository.addHabit(name, iconRes, frequency, reminderTime)
-            // Refresh to ensure the UI updates
+            repository.addHabit(name, iconRes, frequency, reminderTime, activeDays)
             refreshHabits()
         }
     }

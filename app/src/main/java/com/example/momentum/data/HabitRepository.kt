@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.momentum.data.dao.HabitDao
 import com.example.momentum.data.entity.HabitCompletionEntity
 import com.example.momentum.data.entity.HabitEntity
+import com.example.momentum.data.util.StringListConverter
 import com.example.momentum.model.Habit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -11,28 +12,34 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
-/**
- * Repository class to handle habit and habit completion data operations
- */
+
 class HabitRepository(private val habitDao: HabitDao) {
 
+    private val stringListConverter = StringListConverter()
+
     // Convert between domain model and entity
-    private fun HabitEntity.toModel(isCompleted: Boolean = false): Habit {
+    private fun HabitEntity.toModel(completions: List<LocalDate> = emptyList()): Habit {
         return Habit(
             id = this.id,
             name = this.name,
             iconRes = this.iconRes,
-            isCompleted = isCompleted
+            frequency = this.frequency,
+            reminderTime = this.reminderTime,
+            activeDays = stringListConverter.fromString(this.activeDays),
+            completions = completions,
+            isCompleted = completions.isNotEmpty() // For backward compatibility
         )
     }
 
-    private fun Habit.toEntity(frequency: Int = 1, reminderTime: String? = null): HabitEntity {
+    private fun Habit.toEntity(): HabitEntity {
         return HabitEntity(
             id = this.id,
             name = this.name,
             iconRes = this.iconRes,
-            frequency = frequency,
-            reminderTime = reminderTime
+            frequency = this.frequency,
+            reminderTime = this.reminderTime,
+            activeDays = stringListConverter.toString(this.activeDays),
+            createdAt = System.currentTimeMillis()
         )
     }
 
@@ -41,50 +48,97 @@ class HabitRepository(private val habitDao: HabitDao) {
         return this.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     }
 
+    // Convert timestamp to LocalDate
+    private fun Long.toLocalDate(): LocalDate {
+        return Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
+    }
+
     // Function to get habits with completion status for today
     fun getHabitsWithTodayCompletion(): Flow<List<Habit>> {
         val today = LocalDate.now().toTimestamp()
+        val startOfDay = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val endOfDay = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() - 1
+
+        // Get the current day of week (0-6, Monday to Sunday)
+        val todayDayOfWeek = LocalDate.now().dayOfWeek.value - 1
+
         return habitDao.getAllHabits().map { habitEntities ->
-            val completionsToday = habitDao.getCompletionsForDate(today)
-            habitEntities.map { habitEntity ->
-                val isCompletedToday = completionsToday.any { it.habitId == habitEntity.id }
-                habitEntity.toModel(isCompletedToday)
-            }
+            habitEntities
+                .filter { entity ->
+                    // Only include habits active today
+                    val activeDays = stringListConverter.fromString(entity.activeDays)
+                    todayDayOfWeek in activeDays
+                }
+                .map { habitEntity ->
+                    // Get all completions for this habit today
+                    val todayCompletions = habitDao.getHabitCompletionsInTimeRange(
+                        habitId = habitEntity.id,
+                        startTime = startOfDay,
+                        endTime = endOfDay
+                    )
+
+                    // Convert to LocalDate objects for the model
+                    val completionDates = todayCompletions.map { it.completedDate.toLocalDate() }
+
+                    // Create the model with today's completions
+                    habitEntity.toModel(completionDates)
+                }
         }
     }
 
-    // Function to toggle habit completion status
-    suspend fun toggleHabitCompletion(habit: Habit) {
-        val today = LocalDate.now().toTimestamp()
-        val existingCompletion = habitDao.getHabitCompletionByDate(habit.id, today)
+    // Function to toggle habit completion status with index
+    suspend fun toggleHabitCompletion(habit: Habit, completionIndex: Int) {
+        val today = LocalDate.now()
+        val todayTimestamp = today.toTimestamp()
+        val startOfDay = today.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val endOfDay = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() - 1
 
-        if (existingCompletion != null) {
-            // If already completed, remove the completion
-            habitDao.deleteHabitCompletion(existingCompletion)
+        // Get existing completions for today
+        val existingCompletions = habitDao.getHabitCompletionsInTimeRange(
+            habitId = habit.id,
+            startTime = startOfDay,
+            endTime = endOfDay
+        )
+
+        if (existingCompletions.size <= completionIndex) {
+            // We need to add a completion if we don't have enough yet and haven't reached frequency
+            if (existingCompletions.size < habit.frequency) {
+                // Add a new completion
+                val completion = HabitCompletionEntity(
+                    habitId = habit.id,
+                    completedDate = todayTimestamp,
+                    completedTime = System.currentTimeMillis()
+                )
+                habitDao.insertHabitCompletion(completion)
+            }
         } else {
-            // Otherwise, add a new completion
-            val completion = HabitCompletionEntity(
-                habitId = habit.id,
-                completedDate = today
-            )
-            habitDao.insertHabitCompletion(completion)
+            // Remove the completion at this index
+            val completionToRemove = existingCompletions[completionIndex]
+            habitDao.deleteHabitCompletion(completionToRemove)
         }
     }
 
     // Add a new habit
-    suspend fun addHabit(name: String, iconRes: Int, frequency: Int = 1, reminderTime: String? = null): Long {
+    suspend fun addHabit(
+        name: String,
+        iconRes: Int,
+        frequency: Int = 1,
+        reminderTime: String? = null,
+        activeDays: Set<Int> = setOf(0, 1, 2, 3, 4, 5, 6) // Default: all days
+    ): Long {
         val habitEntity = HabitEntity(
             name = name,
             iconRes = iconRes,
             frequency = frequency,
-            reminderTime = reminderTime
+            reminderTime = reminderTime,
+            activeDays = stringListConverter.toString(activeDays)
         )
         return habitDao.insertHabit(habitEntity)
     }
 
     // Update an existing habit
-    suspend fun updateHabit(habit: Habit, frequency: Int = 1, reminderTime: String? = null) {
-        val habitEntity = habit.toEntity(frequency, reminderTime)
+    suspend fun updateHabit(habit: Habit) {
+        val habitEntity = habit.toEntity()
         habitDao.updateHabit(habitEntity)
     }
 
@@ -100,7 +154,6 @@ class HabitRepository(private val habitDao: HabitDao) {
         habitDao.deleteAllHabits()
     }
 
-
     // Get completion data for history screen (for a date range)
     fun getCompletionsForDateRange(startDate: LocalDate, endDate: LocalDate): Flow<Map<Long, List<LocalDate>>> {
         val startTimestamp = startDate.toTimestamp()
@@ -112,7 +165,7 @@ class HabitRepository(private val habitDao: HabitDao) {
                     { it.habitId },
                     {
                         // Convert the timestamp back to LocalDate properly
-                        Instant.ofEpochMilli(it.completedDate).atZone(ZoneId.systemDefault()).toLocalDate()
+                        it.completedDate.toLocalDate()
                     }
                 )
             }
@@ -132,5 +185,4 @@ class HabitRepository(private val habitDao: HabitDao) {
     suspend fun getHabitById(habitId: Long): HabitEntity? {
         return habitDao.getHabitById(habitId)
     }
-
 }
