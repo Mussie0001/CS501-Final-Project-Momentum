@@ -49,10 +49,11 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         iconRes: Int,
         frequency: Int = 1,
         reminderTime: String? = null,
-        activeDays: Set<Int> = setOf(0, 1, 2, 3, 4, 5, 6) // Default: all days
+        activeDays: Set<Int> = setOf(0, 1, 2, 3, 4, 5, 6), // Default: all days
+        iconImageUri: String? = null
     ) {
         viewModelScope.launch {
-            repository.addHabit(name, iconRes, frequency, reminderTime, activeDays)
+            repository.addHabit(name, iconRes, frequency, reminderTime, activeDays, iconImageUri)
             refreshHabits()
         }
     }

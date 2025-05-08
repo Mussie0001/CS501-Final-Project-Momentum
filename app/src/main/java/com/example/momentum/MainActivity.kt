@@ -227,13 +227,14 @@ class MainActivity : ComponentActivity() {
                                         isLandscape = true
                                     )
                                     "add" -> AddHabitForm(
-                                        onSave = { name, freq, reminder, activeDays ->
+                                        onSave = { name, freq, reminder, activeDays, iconImageUri ->
                                             habitViewModel.addHabit(
                                                 name = name,
                                                 iconRes = R.drawable.ic_exercise,
                                                 frequency = freq,
                                                 reminderTime = reminder,
-                                                activeDays = activeDays
+                                                activeDays = activeDays,
+                                                iconImageUri = iconImageUri
                                             )
                                             lastSelectedTab = selectedTab
                                             selectedTab = "home"
@@ -272,13 +273,14 @@ class MainActivity : ComponentActivity() {
                                 isLandscape = false
                             )
                             "add" -> AddHabitForm(
-                                onSave = { name, freq, reminder, activeDays ->
+                                onSave = { name, freq, reminder, activeDays, iconImageUri ->
                                     habitViewModel.addHabit(
                                         name = name,
                                         iconRes = R.drawable.ic_exercise,
                                         frequency = freq,
                                         reminderTime = reminder,
-                                        activeDays = activeDays
+                                        activeDays = activeDays,
+                                        iconImageUri = iconImageUri
                                     )
                                     lastSelectedTab = selectedTab
                                     selectedTab = "home"

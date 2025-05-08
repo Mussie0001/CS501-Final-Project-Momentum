@@ -18,7 +18,7 @@ import com.example.momentum.data.util.StringListConverter
  */
 @Database(
     entities = [HabitEntity::class, HabitCompletionEntity::class],
-    version = 2, // new version
+    version = 3, // new version
     exportSchema = false
 )
 @TypeConverters(DateConverter::class, StringListConverter::class)

@@ -1,5 +1,9 @@
 package com.example.momentum.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -8,10 +12,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.momentum.ui.components.DaySelector
+import coil.compose.rememberAsyncImagePainter
+
+
 
 @Composable
 fun AddHabitForm(
-    onSave: (name: String, frequency: Int, reminderTime: String?, activeDays: Set<Int>) -> Unit,
+    onSave: (name: String, frequency: Int, reminderTime: String?, activeDays: Set<Int>, iconImageUri: String?) -> Unit,
     onCancel: () -> Unit,
     isLandscape: Boolean = false
 ) {
@@ -19,6 +26,28 @@ fun AddHabitForm(
     var frequencyInput by remember { mutableStateOf("") }
     val frequency = frequencyInput.toIntOrNull()?.coerceIn(1, 5)
     var reminderTime by remember { mutableStateOf("") }
+
+    val imageUri = remember { mutableStateOf<Uri?>(null) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
+        imageUri.value = it
+    }
+
+    val iconPickerSection = @Composable {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { launcher.launch("image/*") }) {
+                Text("Choose Icon Image")
+            }
+            imageUri.value?.let { uri ->
+                Image(
+                    painter = rememberAsyncImagePainter(model = uri),
+                    contentDescription = "Habit Icon Preview",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .padding(top = 4.dp)
+                )
+            }
+        }
+    }
 
     // Initialize with all days selected (Monday = 0, Sunday = 6)
     var selectedDays by remember { mutableStateOf(setOf(0, 1, 2, 3, 4, 5, 6)) }
@@ -75,9 +104,12 @@ fun AddHabitForm(
             ) {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = {
+                        name = it.trimStart().take(50)  // limit to 50 characters
+                    },
                     label = { Text("Habit Type") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
 
                 OutlinedTextField(
@@ -89,12 +121,14 @@ fun AddHabitForm(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                OutlinedTextField(
-                    value = reminderTime,
-                    onValueChange = { reminderTime = it },
-                    label = { Text("Reminder Time (optional)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+//                OutlinedTextField(
+//                    value = reminderTime,
+//                    onValueChange = { reminderTime = it },
+//                    label = { Text("Reminder Time (optional)") },
+//                    modifier = Modifier.fillMaxWidth()
+//                )
+
+                iconPickerSection()
 
                 // Day selector
                 DaySelector(
@@ -127,7 +161,8 @@ fun AddHabitForm(
                                     name,
                                     frequency,
                                     if (reminderTime.isBlank()) null else reminderTime,
-                                    selectedDays
+                                    selectedDays,
+                                    imageUri.value?.toString()
                                 )
                             }
                         },
@@ -154,23 +189,18 @@ fun AddHabitForm(
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Add Habit",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
+                onValueChange = {
+                    name = it.trimStart().take(50)  // field safeguarding
+                },
                 label = { Text("Habit Type") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
             )
 
             OutlinedTextField(
-                value = frequency.toString(),
+                value = frequencyInput,
                 onValueChange = { input ->
                     frequencyInput = input.filter { it.isDigit() }.take(1)
                 },
@@ -178,12 +208,14 @@ fun AddHabitForm(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            OutlinedTextField(
-                value = reminderTime,
-                onValueChange = { reminderTime = it },
-                label = { Text("Reminder Time (optional)") },
-                modifier = Modifier.fillMaxWidth()
-            )
+//            OutlinedTextField(
+//                value = reminderTime,
+//                onValueChange = { reminderTime = it },
+//                label = { Text("Reminder Time (optional)") },
+//                modifier = Modifier.fillMaxWidth()
+//            )
+
+            iconPickerSection()
 
             // Day selector
             DaySelector(
@@ -214,7 +246,8 @@ fun AddHabitForm(
                                 name,
                                 frequency,
                                 if (reminderTime.isBlank()) null else reminderTime,
-                                selectedDays
+                                selectedDays,
+                                imageUri.value?.toString()
                             )
                         }
                     },
@@ -245,7 +278,8 @@ fun AddHabitForm(
                                 name,
                                 frequency,
                                 if (reminderTime.isBlank()) null else reminderTime,
-                                selectedDays
+                                selectedDays,
+                                imageUri.value?.toString()
                             )
                         }
                     },

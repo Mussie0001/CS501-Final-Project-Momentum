@@ -11,7 +11,8 @@ data class Habit(
     val reminderTime: String? = null,
     val activeDays: Set<Int> = setOf(0, 1, 2, 3, 4, 5, 6), // Default: all days (Mon=0, Sun=6)
     val completions: List<LocalDate> = emptyList(), // Completions for today
-    val isCompleted: Boolean = false // Deprecated: For backward compatibility only
+    val isCompleted: Boolean = false, // Deprecated: For backward compatibility only
+    val iconImageUri: String? = null
 ) {
     fun isFullyCompleted(): Boolean = completions.size >= frequency
 

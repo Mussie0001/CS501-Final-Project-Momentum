@@ -27,7 +27,8 @@ class HabitRepository(private val habitDao: HabitDao) {
             reminderTime = this.reminderTime,
             activeDays = stringListConverter.fromString(this.activeDays),
             completions = completions,
-            isCompleted = completions.isNotEmpty() // For backward compatibility
+            isCompleted = completions.isNotEmpty(), // For backward compatibility
+            iconImageUri = iconImageUri
         )
     }
 
@@ -39,7 +40,8 @@ class HabitRepository(private val habitDao: HabitDao) {
             frequency = this.frequency,
             reminderTime = this.reminderTime,
             activeDays = stringListConverter.toString(this.activeDays),
-            createdAt = System.currentTimeMillis()
+            createdAt = System.currentTimeMillis(),
+            iconImageUri = iconImageUri
         )
     }
 
@@ -124,14 +126,16 @@ class HabitRepository(private val habitDao: HabitDao) {
         iconRes: Int,
         frequency: Int = 1,
         reminderTime: String? = null,
-        activeDays: Set<Int> = setOf(0, 1, 2, 3, 4, 5, 6) // Default: all days
+        activeDays: Set<Int> = setOf(0, 1, 2, 3, 4, 5, 6), // Default: all days
+        iconImageUri: String? = null
     ): Long {
         val habitEntity = HabitEntity(
             name = name,
             iconRes = iconRes,
             frequency = frequency,
             reminderTime = reminderTime,
-            activeDays = stringListConverter.toString(activeDays)
+            activeDays = stringListConverter.toString(activeDays),
+            iconImageUri = iconImageUri
         )
         return habitDao.insertHabit(habitEntity)
     }
