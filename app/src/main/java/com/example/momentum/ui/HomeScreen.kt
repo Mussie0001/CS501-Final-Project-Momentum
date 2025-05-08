@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.momentum.R
 import com.example.momentum.model.Habit
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -38,11 +39,22 @@ fun HomeScreen(
     quote: String,
     modifier: Modifier = Modifier,
     onTabSelected: (String) -> Unit,
-    isLandscape: Boolean = false
+    isLandscape: Boolean = false,
+    fetchQuote: suspend () -> String = { "" },
+    steps: Int
 ) {
     val currentDate = remember {
         SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(Date())
     }
+
+    val coroutineScope = rememberCoroutineScope()
+    var displayedQuote by remember { mutableStateOf(quote) }
+    LaunchedEffect(Unit) {
+        if (displayedQuote.isBlank()) {
+            displayedQuote = fetchQuote()
+        }
+    }
+    var lastRefreshTime by remember { mutableStateOf(0L) }
 
     val totalCompletions = habits.sumOf { it.frequency }
     val completedCount = habits.sumOf { it.completions.size }
@@ -145,12 +157,23 @@ fun HomeScreen(
             )
 
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        val now = System.currentTimeMillis()
+                        if (now - lastRefreshTime > 1500) {
+                            lastRefreshTime = now
+                            displayedQuote = "Refreshing..."
+                            coroutineScope.launch {
+                                displayedQuote = fetchQuote()
+                            }
+                        }
+                    },
                 color = MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = quote,
+                    text = displayedQuote,
                     modifier = Modifier.padding(16.dp),
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -165,12 +188,11 @@ fun HomeScreen(
                 modifier = Modifier.padding(top = 8.dp)
             )
 
-            // Habit list section
             if (habits.isEmpty()) {
                 Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
                     Text("No habits yet! Tap 'New Habit' to add one.", textAlign = TextAlign.Center)
@@ -196,7 +218,36 @@ fun HomeScreen(
                 }
             }
 
-            // Completion summary at the bottom
+            // Step counter strip (always shown)
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                tonalElevation = 2.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Steps Today",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = steps.toString(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (steps >= 10_000) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
             Divider(modifier = Modifier.padding(vertical = 8.dp))
 
             Text(

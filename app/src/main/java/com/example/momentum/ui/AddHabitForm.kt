@@ -1,6 +1,7 @@
 package com.example.momentum.ui
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -26,7 +28,7 @@ fun AddHabitForm(
     var frequencyInput by remember { mutableStateOf("") }
     val frequency = frequencyInput.toIntOrNull()?.coerceIn(1, 5)
     var reminderTime by remember { mutableStateOf("") }
-
+    val context = LocalContext.current
     val imageUri = remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
         imageUri.value = it
@@ -157,12 +159,28 @@ fun AddHabitForm(
                     Button(
                         onClick = {
                             if (frequency != null) {
+                                val iconPath = imageUri.value?.let { uri ->
+                                    try {
+                                        val inputStream = context.contentResolver.openInputStream(uri)
+                                        val fileName = "habit_icon_${System.currentTimeMillis()}.png"
+                                        val file = context.filesDir.resolve(fileName)
+                                        inputStream?.use { input ->
+                                            file.outputStream().use { output ->
+                                                input.copyTo(output)
+                                            }
+                                        }
+                                        file.absolutePath
+                                    } catch (e: Exception) {
+                                        Log.e("AddHabitForm", "Failed to save image", e)
+                                        null
+                                    }
+                                }
                                 onSave(
                                     name,
                                     frequency,
-                                    if (reminderTime.isBlank()) null else reminderTime,
+                                    null,
                                     selectedDays,
-                                    imageUri.value?.toString()
+                                    iconPath
                                 )
                             }
                         },
@@ -242,12 +260,28 @@ fun AddHabitForm(
                 Button(
                     onClick = {
                         if (frequency != null) {
+                            val iconPath = imageUri.value?.let { uri ->
+                                try {
+                                    val inputStream = context.contentResolver.openInputStream(uri)
+                                    val fileName = "habit_icon_${System.currentTimeMillis()}.png"
+                                    val file = context.filesDir.resolve(fileName)
+                                    inputStream?.use { input ->
+                                        file.outputStream().use { output ->
+                                            input.copyTo(output)
+                                        }
+                                    }
+                                    file.absolutePath
+                                } catch (e: Exception) {
+                                    Log.e("AddHabitForm", "Failed to save image", e)
+                                    null
+                                }
+                            }
                             onSave(
                                 name,
                                 frequency,
-                                if (reminderTime.isBlank()) null else reminderTime,
+                                null,
                                 selectedDays,
-                                imageUri.value?.toString()
+                                iconPath
                             )
                         }
                     },
@@ -274,12 +308,28 @@ fun AddHabitForm(
                 Button(
                     onClick = {
                         if (frequency != null) {
+                            val iconPath = imageUri.value?.let { uri ->
+                                try {
+                                    val inputStream = context.contentResolver.openInputStream(uri)
+                                    val fileName = "habit_icon_${System.currentTimeMillis()}.png"
+                                    val file = context.filesDir.resolve(fileName)
+                                    inputStream?.use { input ->
+                                        file.outputStream().use { output ->
+                                            input.copyTo(output)
+                                        }
+                                    }
+                                    file.absolutePath
+                                } catch (e: Exception) {
+                                    Log.e("AddHabitForm", "Failed to save image", e)
+                                    null
+                                }
+                            }
                             onSave(
                                 name,
                                 frequency,
-                                if (reminderTime.isBlank()) null else reminderTime,
+                                null,
                                 selectedDays,
-                                imageUri.value?.toString()
+                                iconPath
                             )
                         }
                     },
@@ -288,6 +338,7 @@ fun AddHabitForm(
                 ) {
                     Text("Save")
                 }
+
 
                 OutlinedButton(
                     onClick = onCancel,

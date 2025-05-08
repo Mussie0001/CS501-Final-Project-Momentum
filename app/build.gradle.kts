@@ -70,6 +70,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.junit.junit)
+    implementation(libs.activity.ktx)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     androidTestImplementation(libs.androidx.ui.test.junit4)
