@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 
 
 class HabitRepository(private val habitDao: HabitDao) {
@@ -18,7 +20,7 @@ class HabitRepository(private val habitDao: HabitDao) {
     private val stringListConverter = StringListConverter()
 
     // Convert between domain model and entity
-    private fun HabitEntity.toModel(completions: List<LocalDate> = emptyList()): Habit {
+    private fun HabitEntity.toModel(completions: List<LocalDate> = emptyList(), streak: Int = 0): Habit {
         return Habit(
             id = this.id,
             name = this.name,
@@ -28,7 +30,8 @@ class HabitRepository(private val habitDao: HabitDao) {
             activeDays = stringListConverter.fromString(this.activeDays),
             completions = completions,
             isCompleted = completions.isNotEmpty(), // For backward compatibility
-            iconImageUri = iconImageUri
+            iconImageUri = iconImageUri,
+            streak = streak
         )
     }
 
@@ -55,37 +58,61 @@ class HabitRepository(private val habitDao: HabitDao) {
         return Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
     }
 
-    // Function to get habits with completion status for today
-    fun getHabitsWithTodayCompletion(): Flow<List<Habit>> {
-        val today = LocalDate.now().toTimestamp()
-        val startOfDay = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val endOfDay = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() - 1
+    internal fun calculateStreak(dates: List<LocalDate>): Int {
+        if (dates.isEmpty()) return 0
 
-        // Get the current day of week (0-6, Monday to Sunday)
-        val todayDayOfWeek = LocalDate.now().dayOfWeek.value - 1
+        val sortedDates = dates.distinct().sortedDescending()
+        var streak = 0
+        var expectedDate = LocalDate.now()
 
-        return habitDao.getAllHabits().map { habitEntities ->
-            habitEntities
-                .filter { entity ->
-                    // Only include habits active today
-                    val activeDays = stringListConverter.fromString(entity.activeDays)
-                    todayDayOfWeek in activeDays
-                }
-                .map { habitEntity ->
-                    // Get all completions for this habit today
-                    val todayCompletions = habitDao.getHabitCompletionsInTimeRange(
-                        habitId = habitEntity.id,
-                        startTime = startOfDay,
-                        endTime = endOfDay
-                    )
-
-                    // Convert to LocalDate objects for the model
-                    val completionDates = todayCompletions.map { it.completedDate.toLocalDate() }
-
-                    // Create the model with today's completions
-                    habitEntity.toModel(completionDates)
-                }
+        for (date in sortedDates) {
+            if (date == expectedDate) {
+                streak++
+                expectedDate = expectedDate.minusDays(1)
+            } else {
+                break // found a gap
+            }
         }
+
+        return streak
+    }
+
+
+
+    // Function to get habits with completion status for today
+    fun getHabitsWithTodayCompletion(): Flow<List<Habit>> = flow {
+        val today = LocalDate.now()
+        val todayDayOfWeek = today.dayOfWeek.value - 1
+        val startOfDay = today.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val endOfDay = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() - 1
+
+        val habitEntities = habitDao.getAllHabits().first()
+
+        val habits = habitEntities.filter { entity ->
+            val activeDays = stringListConverter.fromString(entity.activeDays)
+            todayDayOfWeek in activeDays
+        }.map { entity ->
+            val todayCompletions = habitDao.getHabitCompletionsInTimeRange(
+                habitId = entity.id,
+                startTime = startOfDay,
+                endTime = endOfDay
+            )
+
+            val allCompletions = habitDao.getHabitCompletionHistory(entity.id).first()
+            val completionDates = allCompletions
+                .map { it.completedDate.toLocalDate() }
+                .distinct()
+                .sortedDescending()
+
+            val streak = calculateStreak(completionDates)
+
+            entity.toModel(
+                completions = todayCompletions.map { it.completedDate.toLocalDate() },
+                streak = streak
+            )
+        }
+
+        emit(habits)
     }
 
     // Function to toggle habit completion status with index

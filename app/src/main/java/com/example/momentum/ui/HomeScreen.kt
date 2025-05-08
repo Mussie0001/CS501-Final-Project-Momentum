@@ -253,7 +253,20 @@ fun HabitItem(
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = habit.name, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = habit.name,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium // larger text for habit name
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "🔥 Streak: ${habit.streak} day${if (habit.streak == 1) "" else "s"}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
 
                 Spacer(modifier = Modifier.height(4.dp))
 
