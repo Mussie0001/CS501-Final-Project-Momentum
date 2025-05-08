@@ -130,134 +130,140 @@ fun HomeScreen(
             }
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = modifier
                 .padding(padding)
                 .padding(horizontal = 24.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(bottom = 24.dp)
         ) {
-            Text(
-                text = "Momentum",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 24.dp)
-            )
-
-            Text(
-                text = "Hi, today is $currentDate",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
-
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        val now = System.currentTimeMillis()
-                        if (now - lastRefreshTime > 1500) {
-                            lastRefreshTime = now
-                            displayedQuote = "Refreshing..."
-                            coroutineScope.launch {
-                                displayedQuote = fetchQuote()
-                            }
-                        }
-                    },
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(12.dp)
-            ) {
+            item {
                 Text(
-                    text = displayedQuote,
-                    modifier = Modifier.padding(16.dp),
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+                    text = "Momentum",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp)
                 )
             }
 
-            Text(
-                text = "Today's Habits",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-
-            if (habits.isEmpty()) {
-                Box(
+            item {
+                Text(
+                    text = "Hi, today is $currentDate",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
+                        .padding(vertical = 8.dp)
+                )
+            }
+
+            item {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            val now = System.currentTimeMillis()
+                            if (now - lastRefreshTime > 1500) {
+                                lastRefreshTime = now
+                                displayedQuote = "Refreshing..."
+                                coroutineScope.launch {
+                                    displayedQuote = fetchQuote()
+                                }
+                            }
+                        },
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("No habits yet! Tap 'New Habit' to add one.", textAlign = TextAlign.Center)
+                    Text(
+                        text = displayedQuote,
+                        modifier = Modifier.padding(16.dp),
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            item {
+                Text(
+                    text = "Today's Habits",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
+            if (habits.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No habits yet! Tap 'New Habit' to add one.", textAlign = TextAlign.Center)
+                    }
                 }
             } else {
-                LazyColumn(
+                itemsIndexed(habits, key = { _, habit -> habit.id }) { index, habit ->
+                    HabitItem(
+                        habit = habit,
+                        onToggle = { completionIndex -> handleToggle(index, completionIndex) },
+                        onDelete = {
+                            habitToDelete = index
+                            showDeleteDialog = true
+                        }
+                    )
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    tonalElevation = 2.dp,
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentPadding = PaddingValues(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .fillMaxWidth()
+                        .height(56.dp)
                 ) {
-                    itemsIndexed(habits, key = { _, habit -> habit.id }) { index, habit ->
-                        HabitItem(
-                            habit = habit,
-                            onToggle = { completionIndex -> handleToggle(index, completionIndex) },
-                            onDelete = {
-                                habitToDelete = index
-                                showDeleteDialog = true
-                            }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Steps Today",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = steps.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (steps >= 10_000) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
-            }
 
-            // Step counter strip (always shown)
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                tonalElevation = 2.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-            ) {
-                Row(
+                Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                Text(
+                    text = "$completedCount of $totalCompletions completions done today",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Steps Today",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = steps.toString(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (steps >= 10_000) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                    )
-                }
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                )
             }
-
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
-
-            Text(
-                text = "$completedCount of $totalCompletions completions done today",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-            )
         }
     }
 }
